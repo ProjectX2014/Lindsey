@@ -1,0 +1,84 @@
+<launch>
+
+<node pkg="projX" type="Drone_test" name="Joystick_Tester" respawn="true"/> 
+
+<node pkg="joy" type="joy_node" name="Xbox_Controller" args="/dev/input/js0" respawn="true"/>
+
+<node pkg="rxtools" type="rxplot" output="screen" name="rxplot" args="
+	-t 'Debug Information' 
+	-l Batt
+	-b 100 /ardrone/navdata/batteryPercent" respawn="true" />
+
+<node pkg="image_view" type="image_view" respawn="false" name="Front_Camera_Viewer" output="screen">
+            <param name="autosize" type="bool" value="TRUE" />
+            <param name="window_name" type="str" value="'Front Camera'" />
+            <remap from="image" to="ardrone/front/image_raw" />
+</node>
+
+<node pkg="image_view" type="image_view" respawn="false" name="Bottom_Camera_Viewer" output="screen">
+            <param name="autosize" type="bool" value="TRUE" />
+            <param name="window_name" type="str" value="'Bottom Camera'" />
+            <remap from="image" to="ardrone/bottom/image_raw" />
+</node>
+
+<node name="Drone_Drivers" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" respawn="true" clear_params="true"> 
+
+		<param name="do_imu_caliberation" value="true" />
+		<param name="tf_prefix" value="ardrone" />
+		<param name="looprate" value="50" />
+		<param name="outdoor" value="1" />
+		<param name="flight_without_shell" value="0" />
+		<param name="max_bitrate" value="4000" />
+		<param name="bitrate" value="4000" />
+		<param name="altitude_max" value="5000" />
+		<param name="altitude_min" value="500" />
+		<param name="euler_angle_max" value="0.136" /> <!--limit angle to 8 degrees -->
+		<param name="control_vz_max" value="2000" /> <!-- was 700 -->
+		<param name="control_yaw" value="1.75" />
+		<param name="navdata_demo" value="FALSE" /> <!-- May need to be false for tag detection -->
+		<param name="enable_navdata_time" value="false" />
+		<param name="enable_navdata_raw_measures" value="FALSE" />
+		<param name="enable_navdata_phys_measures" value="FALSE" />
+		<param name="enable_navdata_gyros_offsets" value="false" />
+		<param name="enable_navdata_euler_angles" value="FALSE" />
+		<param name="enable_navdata_references" value="FALSE" />
+		<param name="enable_navdata_trims" value="FALSE" />
+		<param name="enable_navdata_rc_references" value="FALSE" />
+		<param name="enable_navdata_pwm" value="true" />
+		<param name="enable_navdata_altitude" value="false" />
+		<param name="enable_navdata_vision_raw" value="true" />
+		<param name="enable_navdata_vision_of" value="false" />
+		<param name="enable_navdata_vision" value="false" />
+		<param name="enable_navdata_vision_perf" value="false" />
+		<param name="enable_navdata_trackers_send" value="false" />
+		<param name="enable_navdata_vision_detect" value="true" />
+		<param name="enable_navdata_watchdog" value="false" />
+		<param name="enable_navdata_adc_data_frame" value="false" />
+		<param name="enable_navdata_video_stream" value="false" />
+		<param name="enable_navdata_games" value="false" />
+		<param name="enable_navdata_pressure_raw" value="false" />
+		<param name="enable_navdata_magneto" value="false" />
+		<param name="enable_navdata_wind_speed" value="false" />
+		<param name="enable_navdata_kalman_pressure" value="false" />
+		<param name="enable_navdata_hdvideo_stream" value="false" />
+		<param name="enable_navdata_wifi" value="false" />
+		<param name="enable_navdata_zimmu_3000" value="false" />
+		<!-- <param name="navdata_options" value="NAVDATA_OPTION_FULL_MASK" />  May need to be used for tag detection -->
+
+		<param name="detect_type" value="CAD_TYPE_VISION" /> <!-- value 2 for front camera (enemy color), value 3 - no detection, and value 4 - vertical camera roundel detection values. CAD_TYPE_VISION is 2d horizontal tags-->
+
+<!-- enemy_colors: Detect green,yellow, blue shell (1,2,3) -->
+		<param name="enemy_colors" value="2" />
+		<param name= "enemy_without_shell" value="0" /> <!-- Detect indoor/outdoor shells -->
+		<param name="detections_select_h" value="32" />
+		<param name="detections_select_v" value="0" /><!-- Bottom Camera detection disabled, was detections_select_v_hsync 128 -->
+
+		<!-- Covariance Values (3x3 matrices reshaped to 1x9)
+		#<rosparam param="cov/imu_la">[0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1]</rosparam>
+		<rosparam param="cov/imu_av">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]</rosparam>
+		<rosparam param="cov/imu_or">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100000.0]</rosparam>
+		-->
+
+</node>
+
+</launch>

@@ -1,0 +1,23 @@
+<package>
+  <description brief="projX">
+
+     projX
+
+  </description>
+  <author>redbull1</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/projX</url>
+  <depend package="roscpp"/>
+  <!-- depend package="Eigen"/> -->
+  <depend package="std_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="tf"/>
+  <depend package="geometry_msgs"/>
+  <depend package="ardrone_autonomy"/>
+  <depend package="irobot_create_2_1"/>
+  <depend package="rospy"/>
+
+</package>
+
+

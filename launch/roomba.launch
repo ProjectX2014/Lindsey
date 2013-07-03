@@ -1,0 +1,14 @@
+<launch>
+
+<node pkg="projX" type="Roomba_test" name="Joystick_Tester" respawn="true"/> 
+
+<node pkg="joy" type="joy_node" name="Xbox_Controller" args="/dev/input/js0" respawn="true"/>
+
+<!--
+<node pkg="rxtools" type="rxplot" output="screen" name="rxplot" args="-t 'Debug Information' 
+	-l Batt
+	-b 100 /ardrone/navdata/batteryPercent" respawn="true" />
+-->
+<node name="iRobot_Drivers" pkg="irobot_create_2_1" type="driver.py" respawn="true"/> 
+
+</launch>
