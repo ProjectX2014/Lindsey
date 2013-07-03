@@ -1,0 +1,41 @@
+<launch>
+ <!--
+<include file="$(find Lindsey)/launch/camera.launch" /> 
+-->
+<!-- 
+   <node name="camshift_node" pkg="pi_head_tracking_tutorial" type="camshift_node.py" output="screen">
+      <remap from="input" to="/camera/image_raw" />
+      <remap from="camera_info" to="/camera/camera_info" />
+    </node>
+-->
+<!-- creates camera on usb_cam/ name space -->
+ <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
+    <param name="video_device" value="/dev/video0" />
+    <param name="image_width" value="640" /> <!-- 320, 240 -->
+    <param name="image_height" value="480" />
+    <param name="pixel_format" value="mjpeg" />
+    <param name="camera_frame_id" value="usb_cam" />
+    <param name="io_method" value="mmap"/>
+  </node>
+
+<!-- Display output from camera -->
+<node pkg="image_view" type="image_view" respawn="false" name="CamShift" output="screen">
+            <param name="autosize" type="bool" value="TRUE" />
+            <param name="window_name" type="str" value="'CamShift'" />
+            <remap from="image" to="/usb_cam/image_raw" />
+</node>
+
+<!-- Starts cam shift program -->
+    <node name="camshift_node" pkg="Lindsey" type="camshift_node.py" output="screen">
+      <remap from="input" to="/usb_cam/image_raw" />
+      <remap from="camera_info" to="/usb_cam/camera_info" />
+    </node>
+
+
+
+
+
+
+
+
+</launch>
