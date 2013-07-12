@@ -59,22 +59,6 @@ double tag_z;
 
 float ux, uy, uz;
 
-
-const int tag_id =0;//CHANGES WHICH TAG TO DISPLAY
-float vision_angle[2];
-float tag_position[3];
-int cam_height=360;
-int cam_width=640;
-float cam_width_rads=92*deg2rad;
-float cam_height_rads=51*deg2rad; //cam_width_degree*(cam_height/cam_width) //NOT MEASURED
-
-const float focal_length = 1.0;//.004; //[pixel/m * m] [???????????????]
-
-const float focal_length_uy = 729.0;// [pixel/m * m]
-const float focal_length_uz = 1350.0;// [pixel/m * m] 
-
-const float center2camera_length = .07;// [m] [???????????????]
-
 double time_stamp;
 int had_message_1 =0;
 int had_message_2 =0;

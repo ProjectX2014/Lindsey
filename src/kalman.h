@@ -136,8 +136,6 @@ A<< 0,0,0, 1,0,0, -1,0,0,  //first line
 A=(ROS_RATE*A+I); //discritize 
 
 
-
-
 //B
 B<< 0,0,0, //1
 	0,0,0, //2
@@ -157,8 +155,7 @@ std::cout << "B" << std::endl;
 std::cout << B << std::endl;
 
 
-//H
-
+//H for measurement of position
 H<< 1,0,0, 0,0,0,   0,0,0,  
 	0,1,0, 0,0,0,   0,0,0,  
 	0,0,1, 0,0,0,   0,0,0,  
@@ -168,8 +165,7 @@ H<< 1,0,0, 0,0,0,   0,0,0,
 	0,0,0, 0,0,1,   0,0,0;
 
 
-//old H from kalman_old
-
+//H_wo_tag is for measurement of just velocity 
 H_wo_tag<<  0,0,0, 1,0,0,  0,0,0,
 			0,0,0, 0,1,0,  0,0,0,
 			0,0,0, 0,0,1,  0,0,0;
