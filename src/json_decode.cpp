@@ -5,7 +5,7 @@ Parcon Robotics
 This code samples a JSON tag from a url
 */
 
-#define URL_FORMAT   "https://api.github.com/repos/%s/%s/commits"
+#define URL_FORMAT   "www.kspresearch.com/docs/quuppaTag"
 #define URL_SIZE     256
 #define BUFFER_SIZE  (256*1024)  /* 256 KB */
 
@@ -114,6 +114,8 @@ int main(int argc, char** argv)
 	size_t i;
 	char *text;
 	char url[URL_SIZE];
+	snprintf(url, URL_SIZE, URL_FORMAT);
+
 	json_t *root;
     json_error_t error;
 
@@ -129,14 +131,12 @@ int main(int argc, char** argv)
     ROS_INFO("Json tag Node");
  	while (ros::ok()) {
 
-		merge_new_mgs();
 		text = request(url);
 
 		if(!text){ 	return 1;	}
-	
+		
 		root = json_loads(text, 0, &error);
 		free(text);
-
 		if(!root)
 			{
 				fprintf(stderr, "error: on line %d: %s\n", error.line, error.text);
@@ -147,44 +147,42 @@ int main(int argc, char** argv)
 				fprintf(stderr, "error: root is not an array\n");
 				return 1;
 			}
-
-
+std::cout <<"size of array"<<std::endl;
+std::cout <<json_array_size(root)<<std::endl;
 		 for(i = 0; i < json_array_size(root); i++)
 		{
-		    json_t *data, *sha, *commit, *message;
+		    json_t *data, *positionY, *positionZ, *smoothedPositionZ, *smoothedPositionY, *smoothedPositionX, *areaId, *positionAccuracy, *id, *areaName, *color, *positionX, *name, *positionTimestampEpoch, *positionTimestamp;
+			
 		    const char *message_text;
 
 		    data = json_array_get(root, i);
 		    if(!json_is_object(data))
 		    {
-		        fprintf(stderr, "error: commit data %d is not an object\n", i + 1);
+		        fprintf(stderr, "error: quuppa data %d is not an object\n", i + 1);
 		        return 1;
 		    }
 
-		    sha = json_object_get(data, "sha");
-		    if(!json_is_string(sha))
+		    positionY = json_object_get(data, "positionY");
+//		    if(!json_is_real(positionY))
+			printf("PosY tag: %f \n",json_number_value(positionY));
+
+			positionZ = json_object_get(data, "positionZ");
+			printf("PosZ tag: %f \n",json_number_value(positionZ));
+
+			areaId = json_object_get(data, "areaId");
+            message = json_object_get(commit, "message");
+
+		    if(!json_is_string(areaId))
 		    {
-		        fprintf(stderr, "error: commit %d: sha is not a string\n", i + 1);
+		        fprintf(stderr, "error on %d: message is not a string\n", i + 1);
 		        return 1;
 		    }
+	  
 
-		    commit = json_object_get(data, "commit");
-		    if(!json_is_object(commit))
-		    {
-		        fprintf(stderr, "error: commit %d: commit is not an object\n", i + 1);
-		        return 1;
-		    }
-
-		    message = json_object_get(commit, "message");
-		    if(!json_is_string(message))
-		    {
-		        fprintf(stderr, "error: commit %d: message is not a string\n", i + 1);
-		        return 1;
-		    }
-
-		    message_text = json_string_value(message);
-		    printf("%.8s %.*s\n",
-		           json_string_value(sha),
+		    message_text = json_string_value(areaId);
+		    printf("%.8s %.8s %.*s\n",
+		           json_number_value(positionY),
+					json_number_value(positionZ),
 		           newline_offset(message_text),
 		           message_text);
 		}
