@@ -35,7 +35,12 @@ add_definitions(${EIGEN_DEFINITIONS})
 
 rosbuild_add_executable(kalman src/kalman.cpp)
 
+INCLUDE (FindCURL) 
+
 rosbuild_add_executable(Drone_test src/Drone_test.cpp)
 rosbuild_add_executable(Roomba_test src/Roomba_test.cpp)
 
+rosbuild_add_executable(Json src/json_decode.cpp)
+target_link_libraries(Json ${CURL_LIBRARIES}) 
+target_link_libraries(Json jansson) 
 
