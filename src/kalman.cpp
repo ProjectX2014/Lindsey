@@ -21,7 +21,7 @@ v is measurement white noise ~ N(0,R)
 */
 
 #include <ros/ros.h>
-#include <eigen/Dense> //needs to be eigen for groovy, Eigen for fuerte?
+#include <Eigen/Dense> //needs to be eigen for groovy, Eigen for fuerte?
 #include <std_msgs/Float32MultiArray.h>
 #include <geometry_msgs/Point.h>
 #include <geometry_msgs/Twist.h>

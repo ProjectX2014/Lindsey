@@ -9,20 +9,38 @@ $ ln -s /usr/local/lib/libjansson.so.4 /usr/lib/libjansson.so.4
 
 #define URL_FORMAT   "www.kspresearch.com/docs/quuppaTag"
 #define URL_SIZE     256
-#define BUFFER_SIZE  (256*1024)  /* 256 KB */
+#define BUFFER_SIZE  (10*1024)  /* 10 KB */
 
 #include <ros/ros.h>
 #include <curl/curl.h>
 #include <jansson.h>
 #include <string.h>
+#include <Lindsey/Tag.h>
+
+/*Tag.h
+int16 NumTags
+int16[] Id
+float32[] PosX
+float32[] PosY
+float32[] PosZ
+float32[] SmoPosX
+float32[] SmoPosY
+float32[] SmoPosZ
+*/
+
+
 
 /*
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/Joy.h>
-#include <geometry_msgs/Vector3.h>
 #include <ardrone_autonomy/Navdata.h>
 */	
+
+
+Lindsey::Tag QTags_old;
+int loop_times =0;
+int DEBUG =0;
 
 void merge_new_mgs(void){
 	
@@ -106,12 +124,11 @@ if(!curl || !data)
     return data;
 }
 
-
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv,"JSON_TAG");
 	ros::NodeHandle node;
-	ros::Rate loop_rate(100);
+	ros::Rate loop_rate(200);
 
 	size_t i;
 	char *text;
@@ -119,20 +136,18 @@ int main(int argc, char** argv)
 	snprintf(url, URL_SIZE, URL_FORMAT);
 
 	json_t *root;
-    json_error_t error;
+   	json_error_t error;
+	
+	int First_time = 1;
+	ros::Publisher tag_msg = node.advertise<Lindsey::Tag>("Quuppa_Tags", 1); 
 
-
-
-	/*
-	ros::Publisher pub_empty_reset;
-	ros::Subscriber nav_sub;
-
-	pub_twist = node.advertise<geometry_msgs::Twist>("cmd_vel", 1); 
-	joy_sub = node.subscribe("joy", 1, joy_callback);
-	*/
-    ROS_INFO("Json tag Node");
+	//ros::Subscriber nav_sub;	
+	//joy_sub = node.subscribe("joy", 1, joy_callback);
+	
+   	ROS_INFO("Json tag Node");
  	while (ros::ok()) {
 
+		Lindsey::Tag QTags; //custom tag message
 		text = request(url);
 
 		if(!text){ 	return 1;	}
@@ -149,8 +164,21 @@ int main(int argc, char** argv)
 				fprintf(stderr, "error: root is not an array\n");
 				return 1;
 			}
-std::cout <<"size of array"<<std::endl;
-std::cout <<json_array_size(root)<<std::endl;
+
+//Set flag in custom message to size of array
+int number_tags=json_array_size(root);
+//printf("Number of tags: %i \n",number_tags);
+QTags.NumTags = number_tags;
+
+QTags.Id[number_tags];
+QTags.Name[number_tags];
+QTags.PosX[number_tags];
+QTags.PosY[number_tags];
+QTags.PosZ[number_tags];
+QTags.SmoPosX[number_tags];
+QTags.SmoPosY[number_tags];
+QTags.SmoPosZ[number_tags];
+
 		 for(i = 0; i < json_array_size(root); i++)
 		{
 		    json_t *data, *positionY, *positionZ, *smoothedPositionZ, *smoothedPositionY, *smoothedPositionX, *areaId, *positionAccuracy, *id, *areaName, *color, *positionX, *name, *positionTimestampEpoch, *positionTimestamp;
@@ -163,39 +191,90 @@ std::cout <<json_array_size(root)<<std::endl;
 		        fprintf(stderr, "error: quuppa data %i is not an object\n", i + 1);
 		        return 1;
 		    }
-			printf("Start of tag \n");
+			
 
 			//start walking through each of the pieces of data, varaible = get object (current tag, "name of data in json format")
 			//one must convert from hex to either number or string
-
-		    positionY = json_object_get(data, "positionY");
-//		    if(!json_is_real(positionY))
-			printf("PosY tag: %f \n",json_number_value(positionY));
-
+			
+			positionX = json_object_get(data, "positionX");
+			positionY = json_object_get(data, "positionY");
 			positionZ = json_object_get(data, "positionZ");
-			printf("PosZ tag: %f \n",json_number_value(positionZ));
-
-
-			smoothedPositionZ = json_object_get(data, "smoothedPositionZ");
-			printf("SmoPosZ tag: %f \n",json_number_value(smoothedPositionZ));
-			
-			smoothedPositionY = json_object_get(data, "smoothedPositionY");
-			printf("SmoPosy tag: %f \n",json_number_value(smoothedPositionY));
-			
 			smoothedPositionX = json_object_get(data, "smoothedPositionX");
-			printf("SmoPosX tag: %f \n",json_number_value(smoothedPositionX));
+			smoothedPositionY = json_object_get(data, "smoothedPositionY");
+			smoothedPositionZ = json_object_get(data, "smoothedPositionZ");
+			id = json_object_get(data, "id");
+			name = json_object_get(data, "name");
+			/*
+			if(!json_is_real(positionY))
+			message_text = json_string_value(name);
+			printf("Name number: %f \n",json_number_value(name));
+			printf("Name: %s \n",message_text);
+			*/
 			
-			areaId = json_object_get(data, "areaId");
-		    message_text = json_string_value(areaId);
-			printf("areaId : %s \n",message_text);
-	   		
-			printf("End of tag \n");
-			printf("------------\n");
+QTags.Id.push_back(i);
+message_text = json_string_value(name);
+QTags.Name.push_back(message_text);
+QTags.PosX.push_back(json_number_value(positionX));
+QTags.PosY.push_back(json_number_value(positionY));
+QTags.PosZ.push_back(json_number_value(positionZ));
+
+QTags.SmoPosX.push_back(json_number_value(smoothedPositionX));
+QTags.SmoPosY.push_back(json_number_value(smoothedPositionY));
+QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
+
 }
 	json_decref(root); //free up the memory taken up by the root
-	printf("End of column");
-	printf("===========");
-	return 1;
+	loop_times++;
+	
+	
+
+//	return 1;
+
+
+//Check that the message is new
+		
+		if(First_time)
+				{
+				QTags_old=QTags;
+				//DEBUB Print
+				if (DEBUG)
+				{
+					for(i = 0; i < QTags.NumTags; i++)
+						{
+						printf("Start of tag: %i \n",i);
+						printf("ID : %i \n",QTags.Id[i]);
+						printf("Name : %s \n",QTags.Name[i].c_str());
+						printf("PosX tag: %f \n",QTags.PosX[i]);
+						printf("PosY tag: %f \n",QTags.PosY[i]);
+						printf("PosZ tag: %f \n",QTags.PosZ[i]);
+						printf("SmoPosX tag: %f \n",QTags.SmoPosX[i]);
+						printf("SmoPosy tag: %f \n",QTags.SmoPosY[i]);
+						printf("SmoPosZ tag: %f \n",QTags.SmoPosZ[i]);
+						//printf("End of tag \n");
+						printf("------------\n");
+						}
+					printf("End of column \n");
+					printf("=========== \n");
+				}
+				//END DEBUG
+				tag_msg.publish(QTags);
+				First_time =0;
+				}
+		else if (QTags.PosX==QTags_old.PosX && QTags.PosY==QTags_old.PosY && QTags.PosZ==QTags_old.PosZ)
+				{/* do nothing*/}
+		else 
+				{
+				QTags_old=QTags;
+				
+				tag_msg.publish(QTags);
+				}	
+		printf("Checked for Tags %i Times \n",loop_times);
+		//Debug to check for hz
+		tag_msg.publish(QTags);
+		//DEBUG
+		ros::spinOnce();
+		loop_rate.sleep();
+
 		}//ros::ok
 ROS_ERROR("ROS::ok failed- Node Closing");
     return 0;
