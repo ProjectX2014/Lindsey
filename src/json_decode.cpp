@@ -3,6 +3,8 @@ Parker Conroy
 Parcon Robotics
 
 This code samples a JSON tag from a url
+you may need to link the library location after install via
+$ ln -s /usr/local/lib/libjansson.so.4 /usr/lib/libjansson.so.4
 */
 
 #define URL_FORMAT   "www.kspresearch.com/docs/quuppaTag"
@@ -155,12 +157,16 @@ std::cout <<json_array_size(root)<<std::endl;
 			
 		    const char *message_text;
 
-		    data = json_array_get(root, i);
-		    if(!json_is_object(data))
+		    data = json_array_get(root, i); //take ith slice of the data, in our case first tag
+		    if(!json_is_object(data)) //check if its valid
 		    {
-		        fprintf(stderr, "error: quuppa data %d is not an object\n", i + 1);
+		        fprintf(stderr, "error: quuppa data %i is not an object\n", i + 1);
 		        return 1;
 		    }
+			printf("Start of tag \n");
+
+			//start walking through each of the pieces of data, varaible = get object (current tag, "name of data in json format")
+			//one must convert from hex to either number or string
 
 		    positionY = json_object_get(data, "positionY");
 //		    if(!json_is_real(positionY))
@@ -169,28 +175,27 @@ std::cout <<json_array_size(root)<<std::endl;
 			positionZ = json_object_get(data, "positionZ");
 			printf("PosZ tag: %f \n",json_number_value(positionZ));
 
+
+			smoothedPositionZ = json_object_get(data, "smoothedPositionZ");
+			printf("SmoPosZ tag: %f \n",json_number_value(smoothedPositionZ));
+			
+			smoothedPositionY = json_object_get(data, "smoothedPositionY");
+			printf("SmoPosy tag: %f \n",json_number_value(smoothedPositionY));
+			
+			smoothedPositionX = json_object_get(data, "smoothedPositionX");
+			printf("SmoPosX tag: %f \n",json_number_value(smoothedPositionX));
+			
 			areaId = json_object_get(data, "areaId");
-            message = json_object_get(commit, "message");
-
-		    if(!json_is_string(areaId))
-		    {
-		        fprintf(stderr, "error on %d: message is not a string\n", i + 1);
-		        return 1;
-		    }
-	  
-
 		    message_text = json_string_value(areaId);
-		    printf("%.8s %.8s %.*s\n",
-		           json_number_value(positionY),
-					json_number_value(positionZ),
-		           newline_offset(message_text),
-		           message_text);
-		}
-
-	    json_decref(root);
-	    return 0;
-
-	
+			printf("areaId : %s \n",message_text);
+	   		
+			printf("End of tag \n");
+			printf("------------\n");
+}
+	json_decref(root); //free up the memory taken up by the root
+	printf("End of column");
+	printf("===========");
+	return 1;
 		}//ros::ok
 ROS_ERROR("ROS::ok failed- Node Closing");
     return 0;
