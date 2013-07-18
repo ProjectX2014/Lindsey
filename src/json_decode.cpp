@@ -9,7 +9,7 @@ $ ln -s /usr/local/lib/libjansson.so.4 /usr/lib/libjansson.so.4
 
 //#define URL_FORMAT   "http://192.168.0.3/quuppaTag.txt"
 //#define URL_FORMAT   "www.kspresearch.com/docs/quuppaTag"
-#define URL_FORMAT   "http://192.123.124:8080/qpe/getHAIPLocation"
+#define URL_FORMAT   "http://192.168.0.124:8080/qpe/getHAIPLocation"
 #define URL_SIZE     256
 //#define BUFFER_SIZE  (10*1024)  /* 10 KB */
 #define BUFFER_SIZE  (256*1024)  /* 256 KB */
@@ -204,8 +204,8 @@ QTags.SmoPosZ[number_tags];
 			printf("Name number: %f \n",json_number_value(name));
 			printf("Name: %s \n",message_text);
 			*/
-			
-QTags.Id.push_back(i);
+message_text = json_string_value(id);		
+QTags.Id.push_back(message_text);
 message_text = json_string_value(name);
 QTags.Name.push_back(message_text);
 QTags.PosX.push_back(json_number_value(positionX));
@@ -236,7 +236,7 @@ QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 					for(i = 0; i < QTags.NumTags; i++)
 						{
 						printf("Start of tag: %i \n",i);
-						printf("ID : %i \n",QTags.Id[i]);
+						printf("ID : %i \n",QTags.Id[i].c_str());
 						printf("Name : %s \n",QTags.Name[i].c_str());
 						printf("PosX tag: %f \n",QTags.PosX[i]);
 						printf("PosY tag: %f \n",QTags.PosY[i]);

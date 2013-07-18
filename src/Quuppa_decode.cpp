@@ -154,7 +154,7 @@ while(ros::ok() && had_message_1){
 		
 		for(i = 0; i < QTags.NumTags; i++)
 			{
-			if (uav_name.compare(QTags.Name[i]))
+			if (uav_name.compare(QTags.Id[i]))
 				{//track with ekf
 				odom_uav_data.header.stamp= ros::Time::now();
 				odom_uav_data.header.frame_id = "UAV";   // the tracked robot frame
@@ -176,7 +176,7 @@ while(ros::ok() && had_message_1){
 				odom_uav_pub.publish(odom_uav_data);
 				}
 
-			if (trackee_name.compare(QTags.Name[i]))
+			if (trackee_name.compare(QTags.Id[i]))
 				{//track with ekf
 				odom_trackee_data.header.stamp= ros::Time::now();
 				odom_trackee_data.header.frame_id = "trackee";   // the tracked robot frame

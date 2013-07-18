@@ -1,6 +1,6 @@
 Header header
 int16 NumTags
-int16[] Id
+string[] Id
 string[] Name
 float32[] PosX
 float32[] PosY
