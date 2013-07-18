@@ -46,10 +46,10 @@ int number_tags_old =0;
 int change_tag_number =0;
 
 //TAGS WE CARE ABOUT
-std::string uav_name = "3304-0249-";
+std::string uav_name = "001830ecf431";
 const int cov_uav =1; //meters
 
-std::string trackee_name = "3304-0249-";
+std::string trackee_name = "78c5e56f39ea";
 const int cov_trackee =1; //meters
 //END TAGS WE CARE ABOUT
 
@@ -158,9 +158,9 @@ while(ros::ok() && had_message_1){
 				{//track with ekf
 				odom_uav_data.header.stamp= ros::Time::now();
 				odom_uav_data.header.frame_id = "UAV";   // the tracked robot frame
-		 		odom_uav_data.pose.pose.position.x = QTags.PosX[i];         // x measurement GPS.
-		 		odom_uav_data.pose.pose.position.y = QTags.PosY[i]; // y measurement GPS.
-		 		odom_uav_data.pose.pose.position.z = QTags.PosZ[i];  // z measurement GPS.
+		 		odom_uav_data.pose.pose.position.x = QTags.PosX[i];         // x measurement Quuppa.
+		 		odom_uav_data.pose.pose.position.y = QTags.PosY[i]; // y measurement Quuppa.
+		 		odom_uav_data.pose.pose.position.z = QTags.PosZ[i];  // z measurement Quuppa.
 		 		odom_uav_data.pose.pose.orientation.x = 1;   // identity quaternion
 		 		odom_uav_data.pose.pose.orientation.y = 0;   // identity quaternion
 		 		odom_uav_data.pose.pose.orientation.z = 0;   // identity quaternion
@@ -180,9 +180,9 @@ while(ros::ok() && had_message_1){
 				{//track with ekf
 				odom_trackee_data.header.stamp= ros::Time::now();
 				odom_trackee_data.header.frame_id = "trackee";   // the tracked robot frame
-		 		odom_trackee_data.pose.pose.position.x = QTags.PosX[i];         // x measurement GPS.
-		 		odom_trackee_data.pose.pose.position.y = QTags.PosY[i]; // y measurement GPS.
-		 		odom_trackee_data.pose.pose.position.z = QTags.PosZ[i];  // z measurement GPS.
+		 		odom_trackee_data.pose.pose.position.x = QTags.PosX[i];         // x measurement Quuppa.
+		 		odom_trackee_data.pose.pose.position.y = QTags.PosY[i]; // y measurement Quuppa.
+		 		odom_trackee_data.pose.pose.position.z = QTags.PosZ[i];  // z measurement Quuppa.
 		 		odom_trackee_data.pose.pose.orientation.x = 1;   // identity quaternion
 		 		odom_trackee_data.pose.pose.orientation.y = 0;   // identity quaternion
 		 		odom_trackee_data.pose.pose.orientation.z = 0;   // identity quaternion

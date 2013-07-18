@@ -32,16 +32,6 @@ float32[] SmoPosY
 float32[] SmoPosZ
 */
 
-
-
-/*
-#include <std_msgs/Empty.h>
-#include <geometry_msgs/Twist.h>
-#include <sensor_msgs/Joy.h>
-#include <ardrone_autonomy/Navdata.h>
-*/	
-
-
 Lindsey::Tag QTags_old;
 int loop_times =0;
 int DEBUG =0;

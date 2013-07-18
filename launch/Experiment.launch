@@ -1,14 +1,32 @@
 <launch>
-<include file="$(find Lindsey)/launch/Quuppa.launch"> <!-- launches json server and Quuppa decoder -->
+	<include file="$(find Lindsey)/launch/Quuppa.launch"/> <!-- launches json server and Quuppa decoder -->
 
-<include file="$(find Lindsey)/launch/EKF.launch">  <!-- quadrotor or uav EKF -->
-<!-- could add ns="quad" to above--> 
-  <!-- all vars that EKF.launch requires must be set -->
-  <arg name="AGENT_NAME" value="uav" />
-</include>
+<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf_UAV">
+    <param name="output_frame" value="ekf_output_UAV"/>
+    <param name="freq" value="30.0"/>
+    <param name="sensor_timeout" value="1.0"/>
+    <param name="odom_used" value="false"/>
+    <param name="imu_used" value="true"/>
+    <param name="vo_used" value="true"/>
+    <param name="debug" value="false"/>
+    <param name="self_diagnose" value="false"/>
+	<remap from="imu_data" to="UAV_imu" />
+	<remap from="vo" to="UAV_vo" />
+  </node>
 
-<include file="$(find Lindsey)/launch/EKF.launch"> <!-- roomba or trackable EKF -->
-  <arg name="AGENT_NAME" value="trackee" />
-</include>
+<node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf_Trackee">
+    <param name="output_frame" value="ekf_output_Trackee"/>
+    <param name="freq" value="30.0"/>
+    <param name="sensor_timeout" value="1.0"/>
+    <param name="odom_used" value="false"/>
+    <param name="imu_used" value="true"/>
+    <param name="vo_used" value="true"/>
+    <param name="debug" value="false"/>
+    <param name="self_diagnose" value="false"/>
+	<remap from="imu_data" to="Trackee_imu" />
+	<remap from="vo" to="Trackee_vo" />
+  </node>
+	
+	<include file="$(find Lindsey)/launch/drone.launch"/> <!-- launches AR.Drone-->
 
 </launch>

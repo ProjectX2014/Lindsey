@@ -34,7 +34,7 @@ int main(int argc, char** argv){
 			//look up transform
 			tf::StampedTransform transform;
 	    try{
-		      listener.lookupTransform("/UAV", "/trackee", ros::Time(0), transform);
+		      listener.lookupTransform("/UAV", "/trackee", ros::Time(0), transform); //could also be ekf_output_UAV
 		    }
 	    catch (tf::TransformException ex){
 		      ROS_ERROR("%s",ex.what());
@@ -42,7 +42,7 @@ int main(int argc, char** argv){
 			relative_position.x=transform.getOrigin().x();
 			relative_position.y=transform.getOrigin().y();
 			relative_position.z=transform.getOrigin().z();
-			tag_pub.publish(relative_position); //publish tag for easy use in Kalman filter
+			tag_pub.publish(relative_position); //publish tag for easy use in whatever
 
 			ros::spinOnce();
 			loop_rate.sleep();

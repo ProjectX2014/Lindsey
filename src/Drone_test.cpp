@@ -20,14 +20,18 @@ double Kd= 0.5;
 double des_altd= 1.0;
 
 double joy_x_,joy_y_,joy_z_,joy_yaw_;
-int joy_a_,joy_b_,joy_xbox_;
+int joy_a_,joy_b_,joy_xbox_,joy_yb_;
 double joy_x,joy_y,joy_z,joy_yaw;
-int joy_a,joy_b,joy_xbox;
+int joy_a,joy_b,joy_xbox,joy_yb;
 
 double drone_vx_, drone_vy_ , drone_vz_;
 double drone_ax_, drone_ay_ , drone_az_, drone_altd_;
 double drone_vx, drone_vy , drone_vz;
 double drone_ax, drone_ay , drone_az, drone_altd;
+
+double tag_x=0.0;
+double tag_y=0.0;
+double tag_z=0.0;
 
 double cmd_x,cmd_y,cmd_z,cmd_yaw;
 int new_msg=0;
@@ -52,6 +56,7 @@ void joy_callback(const sensor_msgs::Joy& joy_msg_in)
 	joy_z_=joy_msg_in.axes[4]; //right stick up-down
 	joy_a_=joy_msg_in.buttons[0]; //a button
 	joy_b_=joy_msg_in.buttons[1]; //b button
+	joy_yb_=joy_msg_in.buttons[3]; //Y button
 	joy_xbox_=joy_msg_in.buttons[8]; //xbox button
 
 	//Take in time
@@ -94,21 +99,6 @@ void test_controller(double vx_des,double vy_des,double altd_des,double Kp, doub
 			{cmd_z=0.0;}
 }		
 
-/*
-geometry_msgs::Twist test_controller(double vx_des,double vy_des,double vz_des,double K)
-{
-		geometry_msgs::Twist twist_msg_gen;
-	
-		twist_msg_gen.linear.x=K*(vx_des-drone_vx_); //{-1 to 1}=K*( m/s - m/s)
-		twist_msg_gen.linear.y=K*(vy_des-drone_vy_); 
-		twist_msg_gen.linear.z=K*(vz_des-drone_vz_);
-		twist_msg_gen.angular.x=1.0; 
-		twist_msg_gen.angular.y=1.0;
-		twist_msg_gen.angular.z=0.0;
-	
-		return twist_msg_gen;
-}
-*/
 double map(double value, double in_min, double in_max, double out_min, double out_max) {
   return (double)((value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
 }	
@@ -120,6 +110,7 @@ void merge_new_mgs(void){
 		joy_yaw=joy_yaw_;
 		joy_a=joy_a_;
 		joy_b=joy_b_;
+		joy_yb=joy_yb_;
 		joy_xbox=joy_xbox_;
 		drone_vx=drone_vx_;
 		drone_vy=drone_vy_;
@@ -130,11 +121,19 @@ void merge_new_mgs(void){
 		drone_altd=drone_altd_;
 	}
 
+void tracking_callback(const geometry_msgs::Vector3& tag_in)
+{
+	tag_x=tag_in.x; //in m/sec
+	tag_y=tag_in.y; //in m/sec
+	tag_z=tag_in.z; //in m/sec
+}
+
+
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv,"ARDrone_fly_from_joy");
-    ros::NodeHandle node;
-    ros::Rate loop_rate(50);
+    	ros::NodeHandle node;
+   	ros::Rate loop_rate(50);
 	ros::Publisher pub_twist;
 	ros::Publisher pub_empty_reset;
 	ros::Publisher pub_empty_land;
@@ -150,6 +149,8 @@ int main(int argc, char** argv)
 	pub_empty_reset = node.advertise<std_msgs::Empty>("ardrone/reset", 1);
 	pub_empty_takeoff = node.advertise<std_msgs::Empty>("ardrone/takeoff", 1);
 	pub_empty_land = node.advertise<std_msgs::Empty>("ardrone/land", 1);
+	ros::Subscriber track_sub = node.subscribe("/UAV_Trackee_RelPos", 1, tracking_callback);
+
 
     ROS_INFO("Starting Test Node, /cmd_vel = f(joy)");
  	while (ros::ok()) {
@@ -184,6 +185,18 @@ int main(int argc, char** argv)
 				}
 			}//drone take off	
 		}
+		if (joy_yb){
+
+			
+			ROS_INFO("Auto Drone x: %f y: %f z: %f",tag_x,tag_y,tag_z);
+		twist_msg.linear.x= tag_x;
+		twist_msg.linear.y= tag_y;
+		twist_msg.linear.z= tag_z +1.0; //plus meters 
+		twist_msg.angular.z=0.0;
+		//pub_twist.publish(twist_msg); //enable later
+
+		}
+else{ //control via joystick
 
 		if (fabs(joy_x)<0.1) {joy_x =0;}
 		//else {joy_x=joy_x*forget+joy_x_old*(1-forget);} //smoothing via forget
@@ -220,7 +233,7 @@ int main(int argc, char** argv)
 
 		ros::spinOnce();
 		loop_rate.sleep();
-
+	}
 		}//ros::ok
 ROS_ERROR("ROS::ok failed- Node Closing");
 }//main
