@@ -32,13 +32,13 @@ find_package(message_generation) #for custom message
 find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 add_definitions(${EIGEN_DEFINITIONS})
-
-rosbuild_add_executable(kalman src/kalman.cpp)
-
 INCLUDE (FindCURL) 
 
+rosbuild_add_executable(Kalman_filter src/kalman.cpp)
 rosbuild_add_executable(Drone_test src/Drone_test.cpp)
 rosbuild_add_executable(Roomba_test src/Roomba_test.cpp)
+rosbuild_add_executable(Rotate_tag src/rotate_tag.cpp)
+rosbuild_add_executable(Quuppa_decode src/Quuppa_decode.cpp)
 
 rosbuild_add_executable(Json src/json_decode.cpp)
 target_link_libraries(Json ${CURL_LIBRARIES}) 

@@ -7,15 +7,18 @@ you may need to link the library location after install via
 $ ln -s /usr/local/lib/libjansson.so.4 /usr/lib/libjansson.so.4
 */
 
-#define URL_FORMAT   "www.kspresearch.com/docs/quuppaTag"
+#define URL_FORMAT   "http://192.168.0.3/quuppaTag.txt"
+//#define URL_FORMAT   "www.kspresearch.com/docs/quuppaTag"
 #define URL_SIZE     256
-#define BUFFER_SIZE  (10*1024)  /* 10 KB */
+//#define BUFFER_SIZE  (10*1024)  /* 10 KB */
+#define BUFFER_SIZE  (256*1024)  /* 256 KB */
 
 #include <ros/ros.h>
 #include <curl/curl.h>
 #include <jansson.h>
 #include <string.h>
 #include <Lindsey/Tag.h>
+#include <ctime>
 
 /*Tag.h
 int16 NumTags
@@ -86,8 +89,6 @@ static char *request(const char *url)
 
     curl = curl_easy_init();
    data = (char*) malloc(256*1024);
-    
-
 
 if(!curl || !data)
         return NULL;
@@ -128,7 +129,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv,"JSON_TAG");
 	ros::NodeHandle node;
-	ros::Rate loop_rate(200);
+	ros::Rate loop_rate(100000);
 
 	size_t i;
 	char *text;
@@ -139,7 +140,8 @@ int main(int argc, char** argv)
    	json_error_t error;
 	
 	int First_time = 1;
-	ros::Publisher tag_msg = node.advertise<Lindsey::Tag>("Quuppa_Tags", 1); 
+	clock_t start, end;
+	ros::Publisher tag_msg = node.advertise<Lindsey::Tag>("Quuppa_raw", 1); 
 
 	//ros::Subscriber nav_sub;	
 	//joy_sub = node.subscribe("joy", 1, joy_callback);
@@ -179,6 +181,7 @@ QTags.SmoPosX[number_tags];
 QTags.SmoPosY[number_tags];
 QTags.SmoPosZ[number_tags];
 
+//start = clock(); //for timing
 		 for(i = 0; i < json_array_size(root); i++)
 		{
 		    json_t *data, *positionY, *positionZ, *smoothedPositionZ, *smoothedPositionY, *smoothedPositionX, *areaId, *positionAccuracy, *id, *areaName, *color, *positionX, *name, *positionTimestampEpoch, *positionTimestamp;
@@ -223,14 +226,14 @@ QTags.SmoPosY.push_back(json_number_value(smoothedPositionY));
 QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 
 }
+//end = clock();//for timing
+//std::cout << "Start" << start  << '\n';
+//std::cout << "End " << float(start / CLOCKS_PER_SEC) << '\n';
+//std::cout << "Process took " << (double(end - start) / CLOCKS_PER_SEC) << "seconds" << '\n';
+
 	json_decref(root); //free up the memory taken up by the root
 	loop_times++;
 	
-	
-
-//	return 1;
-
-
 //Check that the message is new
 		
 		if(First_time)
@@ -268,14 +271,14 @@ QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 				
 				tag_msg.publish(QTags);
 				}	
-		printf("Checked for Tags %i Times \n",loop_times);
-		//Debug to check for hz
+		if (DEBUG) {printf("Checked for Tags %i Times \n",loop_times);}
+		
+		//ros::spinOnce();
 		tag_msg.publish(QTags);
-		//DEBUG
-		ros::spinOnce();
 		loop_rate.sleep();
 
 		}//ros::ok
+
 ROS_ERROR("ROS::ok failed- Node Closing");
     return 0;
 }//main

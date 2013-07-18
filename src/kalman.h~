@@ -1,7 +1,7 @@
 //matrix work for kalman
 
 
-const int ROS_HZ = 200;
+const int ROS_HZ = 40;
 const float ROS_RATE = 1.0/ROS_HZ;
 //part one
 const int dimention_n = 9; //length of state vector

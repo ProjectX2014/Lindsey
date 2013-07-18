@@ -1,0 +1,19 @@
+<launch>
+
+<arg name="AGENT_NAME" default="agent_one" />
+<!-- $(arg AGENT_NAME) -->
+
+  <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf_$(arg AGENT_NAME)">
+    <param name="output_frame" value="ekf_output_$(arg AGENT_NAME)"/>
+    <param name="freq" value="30.0"/>
+    <param name="sensor_timeout" value="1.0"/>
+    <param name="odom_used" value="false"/>
+    <param name="imu_used" value="true"/>
+    <param name="vo_used" value="true"/>
+    <param name="debug" value="false"/>
+    <param name="self_diagnose" value="false"/>
+	<remap from="imu_data" to="$(arg AGENT_NAME)_imu_data" />
+	<remap from="vo" to="$(arg AGENT_NAME)_vo" />
+  </node>
+ </launch> 
+

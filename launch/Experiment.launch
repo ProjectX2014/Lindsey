@@ -1,0 +1,14 @@
+<launch>
+<include file="$(find Lindsey)/launch/Quuppa.launch">
+
+<include file="$(find Lindsey)/launch/EKF.launch"> <!-- ns="quad" -->
+  <!-- all vars that included.launch requires must be set -->
+  <arg name="AGENT_NAME" value="quadrotor" />
+</include>
+
+<include file="$(find Lindsey)/launch/EKF.launch"> <!-- ns="quad" -->
+  <!-- all vars that included.launch requires must be set -->
+  <arg name="AGENT_NAME" value="roomba" />
+</include>
+
+</launch>
