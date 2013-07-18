@@ -7,8 +7,9 @@ you may need to link the library location after install via
 $ ln -s /usr/local/lib/libjansson.so.4 /usr/lib/libjansson.so.4
 */
 
-#define URL_FORMAT   "http://192.168.0.3/quuppaTag.txt"
+//#define URL_FORMAT   "http://192.168.0.3/quuppaTag.txt"
 //#define URL_FORMAT   "www.kspresearch.com/docs/quuppaTag"
+#define URL_FORMAT   "http://192.123.124:8080/qpe/getHAIPLocation"
 #define URL_SIZE     256
 //#define BUFFER_SIZE  (10*1024)  /* 10 KB */
 #define BUFFER_SIZE  (256*1024)  /* 256 KB */

@@ -12,7 +12,7 @@
     <param name="vo_used" value="true"/>
     <param name="debug" value="false"/>
     <param name="self_diagnose" value="false"/>
-	<remap from="imu_data" to="$(arg AGENT_NAME)_imu_data" />
+	<remap from="imu_data" to="$(arg AGENT_NAME)_imu" />
 	<remap from="vo" to="$(arg AGENT_NAME)_vo" />
   </node>
  </launch> 

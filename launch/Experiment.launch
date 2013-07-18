@@ -1,14 +1,14 @@
 <launch>
-<include file="$(find Lindsey)/launch/Quuppa.launch">
+<include file="$(find Lindsey)/launch/Quuppa.launch"> <!-- launches json server and Quuppa decoder -->
 
-<include file="$(find Lindsey)/launch/EKF.launch"> <!-- ns="quad" -->
-  <!-- all vars that included.launch requires must be set -->
-  <arg name="AGENT_NAME" value="quadrotor" />
+<include file="$(find Lindsey)/launch/EKF.launch">  <!-- quadrotor or uav EKF -->
+<!-- could add ns="quad" to above--> 
+  <!-- all vars that EKF.launch requires must be set -->
+  <arg name="AGENT_NAME" value="uav" />
 </include>
 
-<include file="$(find Lindsey)/launch/EKF.launch"> <!-- ns="quad" -->
-  <!-- all vars that included.launch requires must be set -->
-  <arg name="AGENT_NAME" value="roomba" />
+<include file="$(find Lindsey)/launch/EKF.launch"> <!-- roomba or trackable EKF -->
+  <arg name="AGENT_NAME" value="trackee" />
 </include>
 
 </launch>

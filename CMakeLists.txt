@@ -38,6 +38,7 @@ rosbuild_add_executable(Kalman_filter src/kalman.cpp)
 rosbuild_add_executable(Drone_test src/Drone_test.cpp)
 rosbuild_add_executable(Roomba_test src/Roomba_test.cpp)
 rosbuild_add_executable(Rotate_tag src/rotate_tag.cpp)
+rosbuild_add_executable(Rotate_uav_trackee src/Rotate_uav_trackee.cpp)
 rosbuild_add_executable(Quuppa_decode src/Quuppa_decode.cpp)
 
 rosbuild_add_executable(Json src/json_decode.cpp)
