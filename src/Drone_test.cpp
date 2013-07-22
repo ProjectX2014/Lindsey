@@ -20,18 +20,17 @@ double Kd= 0.5;
 double des_altd= 1.0;
 
 double joy_x_,joy_y_,joy_z_,joy_yaw_;
-int joy_a_,joy_b_,joy_xbox_,joy_yb_;
+int joy_a_,joy_b_,joy_xbox_,joy_yb_,joy_xb_;
 double joy_x,joy_y,joy_z,joy_yaw;
-int joy_a,joy_b,joy_xbox,joy_yb;
+int joy_a,joy_b,joy_xbox,joy_yb,joy_xb;
 
 double drone_vx_, drone_vy_ , drone_vz_;
 double drone_ax_, drone_ay_ , drone_az_, drone_altd_;
 double drone_vx, drone_vy , drone_vz;
 double drone_ax, drone_ay , drone_az, drone_altd;
 
-double tag_x=0.0;
-double tag_y=0.0;
-double tag_z=0.0;
+float tag[] = {0.0,0.0,0.0};
+float tag_[] = {0.0,0.0,0.0};
 
 double cmd_x,cmd_y,cmd_z,cmd_yaw;
 int new_msg=0;
@@ -56,6 +55,7 @@ void joy_callback(const sensor_msgs::Joy& joy_msg_in)
 	joy_z_=joy_msg_in.axes[4]; //right stick up-down
 	joy_a_=joy_msg_in.buttons[0]; //a button
 	joy_b_=joy_msg_in.buttons[1]; //b button
+	joy_xb_=joy_msg_in.buttons[2]; //b button
 	joy_yb_=joy_msg_in.buttons[3]; //Y button
 	joy_xbox_=joy_msg_in.buttons[8]; //xbox button
 
@@ -80,7 +80,7 @@ void nav_callback(const ardrone_autonomy::Navdata& msg_in)
 	//ROS_INFO("getting sensor reading");	
 }
 
-
+/*
 void test_controller(double vx_des,double vy_des,double altd_des,double Kp, double Kd)
 {
 		geometry_msgs::Twist twist_msg_gen;
@@ -98,6 +98,7 @@ void test_controller(double vx_des,double vy_des,double altd_des,double Kp, doub
 		if (cmd_z < 0.0)
 			{cmd_z=0.0;}
 }		
+*/
 
 double map(double value, double in_min, double in_max, double out_min, double out_max) {
   return (double)((value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
@@ -111,6 +112,7 @@ void merge_new_mgs(void){
 		joy_a=joy_a_;
 		joy_b=joy_b_;
 		joy_yb=joy_yb_;
+		joy_xb=joy_xb_;
 		joy_xbox=joy_xbox_;
 		drone_vx=drone_vx_;
 		drone_vy=drone_vy_;
@@ -119,13 +121,16 @@ void merge_new_mgs(void){
 		drone_ay=drone_ay_;
 		drone_az=drone_az_;
 		drone_altd=drone_altd_;
+		tag[0]=tag_[0];
+		tag[1]=tag_[1];
+		tag[2]=tag_[2];
 	}
 
-void tracking_callback(const geometry_msgs::Vector3& tag_in)
+void tracking_callback(const geometry_msgs::Vector3& msg)
 {
-	tag_x=tag_in.x; //in m/sec
-	tag_y=tag_in.y; //in m/sec
-	tag_z=tag_in.z; //in m/sec
+	tag_[0]=msg.x;
+	tag_[1]=msg.y;
+	tag_[2]=msg.z; //meters
 }
 
 
@@ -149,12 +154,12 @@ int main(int argc, char** argv)
 	pub_empty_reset = node.advertise<std_msgs::Empty>("ardrone/reset", 1);
 	pub_empty_takeoff = node.advertise<std_msgs::Empty>("ardrone/takeoff", 1);
 	pub_empty_land = node.advertise<std_msgs::Empty>("ardrone/land", 1);
-	ros::Subscriber track_sub = node.subscribe("/UAV_Trackee_RelPos", 1, tracking_callback);
+	ros::Subscriber track_sub = node.subscribe("Point2Point", 1, tracking_callback);
 
 
     ROS_INFO("Starting Test Node, /cmd_vel = f(joy)");
  	while (ros::ok()) {
-	merge_new_mgs();
+		merge_new_mgs();
 		//commands to change state of drone
 		if (joy_a){
 			while (drone_state ==2){
@@ -185,7 +190,35 @@ int main(int argc, char** argv)
 				}
 			}//drone take off	
 		}
+		
 		if (joy_yb){
+
+			merge_new_mgs();
+
+			//if(fabs(tag[0])<0.05) {tag[0]=0.0;}
+			//if(fabs(tag[1])<0.05) {tag[1]=0.0;}
+
+			ROS_INFO("Error x: %f y: %f z: %f",tag[0],tag[1],tag[2]);	
+			twist_msg.linear.x= -tag[1];
+			twist_msg.linear.y= tag[0];
+			if(twist_msg.linear.x>0.1) {twist_msg.linear.x=0.1;}
+			if(twist_msg.linear.x<-0.1) {twist_msg.linear.x=-0.1;}
+			if(twist_msg.linear.y>0.1) {twist_msg.linear.y=0.1;}
+			if(twist_msg.linear.y<-0.1) {twist_msg.linear.y=-0.1;}
+
+//			twist_msg.linear.z= 0.1*(1.0-tag[2]; 
+			twist_msg.linear.z= 0.0; 
+			twist_msg.angular.z=0.0;
+			ROS_INFO("Auto Drone commands x: %f y: %f z: %f",twist_msg.linear.x,twist_msg.linear.y,twist_msg.linear.z);
+
+			
+			pub_twist.publish(twist_msg); //enable later
+			ros::spinOnce();
+			loop_rate.sleep();
+
+		}
+/*
+		if (joy_xb){
 
 			
 			ROS_INFO("Auto Drone x: %f y: %f z: %f",tag_x,tag_y,tag_z);
@@ -196,6 +229,7 @@ int main(int argc, char** argv)
 		//pub_twist.publish(twist_msg); //enable later
 
 		}
+*/
 else{ //control via joystick
 
 		if (fabs(joy_x)<0.1) {joy_x =0;}
@@ -214,10 +248,7 @@ else{ //control via joystick
 		cmd_y= joy_y*max_speed;
 		cmd_z= joy_z*max_speed;
 		cmd_yaw= joy_yaw*max_speed_yaw;
-		ROS_INFO("Before x: %f y: %f z: %f",cmd_x,cmd_y,cmd_z);
-		//test_controller(cmd_x,cmd_y,cmd_z,Kp,Kd); //modifies cmd_x,cmd_y,cmd_z proportinal to quad_speed
-		//test_controller(cmd_x,cmd_y,des_altd,Kp,Kd); //with pos on z
-		ROS_INFO("After x: %f y: %f z: %f",cmd_x,cmd_y,cmd_z);
+		ROS_INFO("Drone Command x: %f y: %f z: %f",cmd_x,cmd_y,cmd_z);
 		twist_msg.linear.x=cmd_x;
 		twist_msg.linear.y=cmd_y;	
 		twist_msg.linear.z=cmd_z;

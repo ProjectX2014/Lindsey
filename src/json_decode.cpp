@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv,"JSON_TAG");
 	ros::NodeHandle node;
-	ros::Rate loop_rate(100000);
+	ros::Rate loop_rate(200);
 
 	size_t i;
 	char *text;
@@ -137,9 +137,9 @@ int main(int argc, char** argv)
 	//ros::Subscriber nav_sub;	
 	//joy_sub = node.subscribe("joy", 1, joy_callback);
 	
-   	ROS_INFO("Json tag Node");
+   	//ROS_INFO("Json tag Node");
  	while (ros::ok()) {
-
+		//ROS_INFO("Loop Check");
 		Lindsey::Tag QTags; //custom tag message
 		text = request(url);
 
@@ -266,6 +266,7 @@ QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 		
 		//ros::spinOnce();
 		tag_msg.publish(QTags);
+		//ROS_INFO("Loop Check End");
 		loop_rate.sleep();
 
 		}//ros::ok

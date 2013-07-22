@@ -1,6 +1,6 @@
 <launch>
 
-<node pkg="projX" type="Drone_test" name="Joystick_Tester" respawn="true"/> 
+<node pkg="Lindsey" type="Drone_test" name="Joystick_Tester" respawn="true"/> 
 
 <node pkg="joy" type="joy_node" name="Xbox_Controller" args="/dev/input/js0" respawn="true"/>
 

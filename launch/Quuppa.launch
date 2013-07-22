@@ -4,9 +4,4 @@
 
 <node pkg="Lindsey" type="Json" name="Json_scraper" respawn="true"/> 
 
-<!--
-<node pkg="rxtools" type="rxplot" output="screen" name="rxplot" args="-t 'Debug Information' 
-	-l Batt
-	-b 100 /ardrone/navdata/batteryPercent" respawn="true" />
--->
 </launch>
