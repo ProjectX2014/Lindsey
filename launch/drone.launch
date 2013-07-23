@@ -1,25 +1,9 @@
 <launch>
 
-<node pkg="Lindsey" type="Drone_test" name="Joystick_Tester" respawn="true"/> 
-
-<node pkg="joy" type="joy_node" name="Xbox_Controller" args="/dev/input/js0" respawn="true"/>
-
 <node pkg="rxtools" type="rxplot" output="screen" name="rxplot" args="
 	-t 'Debug Information' 
 	-l Batt
 	-b 100 /ardrone/navdata/batteryPercent" respawn="true" />
-
-<node pkg="image_view" type="image_view" respawn="false" name="Front_Camera_Viewer" output="screen">
-            <param name="autosize" type="bool" value="TRUE" />
-            <param name="window_name" type="str" value="'Front Camera'" />
-            <remap from="image" to="ardrone/front/image_raw" />
-</node>
-
-<node pkg="image_view" type="image_view" respawn="false" name="Bottom_Camera_Viewer" output="screen">
-            <param name="autosize" type="bool" value="TRUE" />
-            <param name="window_name" type="str" value="'Bottom Camera'" />
-            <remap from="image" to="ardrone/bottom/image_raw" />
-</node>
 
 <node name="Drone_Drivers" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" respawn="true" clear_params="true"> 
 

@@ -16,9 +16,9 @@ float cur_tag[3];
 
 float init[] ={0.0,0.0,0.0};
 float mid[]={-2.0,0.0,0.0};
-float mid1[]={-4.0,-0.0,0.0};
-float mid2[] ={-4.0,-1.0,0.0};
-float mid3[]={-4.0,1.0,0.0};
+float mid1[]={-3.0,-0.0,0.0};
+float mid2[] ={-3.0,-1.0,0.0};
+float mid3[]={-3.0,1.0,0.0};
 float mid4[]={-3.0,0.0,0.0};
 
 void tracking_callback(const geometry_msgs::Vector3& msg)
@@ -83,7 +83,7 @@ while(ros::ok() && (had_message_1==1)){
 
 				next_pub_v3.publish(next_point);
 try{
-				listener.lookupTransform("Des_Pos", "UAV_LPF", ros::Time(0), err_transform); //could also be ekf_output_UAV
+				listener.lookupTransform("UAV_LPF", "Des_Pos", ros::Time(0), err_transform); //could also be ekf_output_UAV
 }
 catch (tf::TransformException ex){
         ROS_ERROR("%s",ex.what());

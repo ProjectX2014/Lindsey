@@ -37,6 +37,9 @@ int new_msg=0;
 int drone_state =0; 
 // state: {0 is failure, 2 is landed, 3 is flying, 4 is hovering, 6 taking off, 8 landing}
 float forget =0.99;
+float kp=1;
+float kd= .5;
+float max_speed_twist =0.2;
 //double joy_x_old,joy_y_old,joy_z_old;
 geometry_msgs::Twist twist_msg;
 std_msgs::Empty emp_msg;
@@ -80,26 +83,6 @@ void nav_callback(const ardrone_autonomy::Navdata& msg_in)
 	//ROS_INFO("getting sensor reading");	
 }
 
-/*
-void test_controller(double vx_des,double vy_des,double altd_des,double Kp, double Kd)
-{
-		geometry_msgs::Twist twist_msg_gen;
-
-		cmd_x=Kp*(vx_des-drone_vx); //-Kd *drone_vx_	; //{-1 to 1}=K*( m/s - m/s)
-		cmd_y=Kp*(vy_des-drone_vy); 
-		//cmd_z=Kp*(vz_des-drone_vz);
-		cmd_z=Kp*(altd_des-drone_altd);
-		twist_msg_gen.angular.x=1.0; 
-		twist_msg_gen.angular.y=1.0;
-		twist_msg_gen.angular.z=0.0;
-
-		if (cmd_z > 1.0)
-			{cmd_z=1.0;}
-		if (cmd_z < 0.0)
-			{cmd_z=0.0;}
-}		
-*/
-
 double map(double value, double in_min, double in_max, double out_min, double out_max) {
   return (double)((value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
 }	
@@ -138,7 +121,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv,"ARDrone_fly_from_joy");
     	ros::NodeHandle node;
-   	ros::Rate loop_rate(50);
+   	ros::Rate loop_rate(100);
 	ros::Publisher pub_twist;
 	ros::Publisher pub_empty_reset;
 	ros::Publisher pub_empty_land;
@@ -146,6 +129,7 @@ int main(int argc, char** argv)
 	ros::Publisher pub_v3;
 	ros::Subscriber joy_sub;
 	ros::Subscriber nav_sub;
+	
 
     pub_twist = node.advertise<geometry_msgs::Twist>("cmd_vel", 1); 
     pub_v3 = node.advertise<geometry_msgs::Vector3>("joy_vel", 1); 
@@ -155,7 +139,8 @@ int main(int argc, char** argv)
 	pub_empty_takeoff = node.advertise<std_msgs::Empty>("ardrone/takeoff", 1);
 	pub_empty_land = node.advertise<std_msgs::Empty>("ardrone/land", 1);
 	ros::Subscriber track_sub = node.subscribe("Point2Point", 1, tracking_callback);
-
+	geometry_msgs::Vector3 p_term;
+	geometry_msgs::Vector3 d_term;
 
     ROS_INFO("Starting Test Node, /cmd_vel = f(joy)");
  	while (ros::ok()) {
@@ -195,41 +180,63 @@ int main(int argc, char** argv)
 
 			merge_new_mgs();
 
-			//if(fabs(tag[0])<0.05) {tag[0]=0.0;}
-			//if(fabs(tag[1])<0.05) {tag[1]=0.0;}
-
 			ROS_INFO("Error x: %f y: %f z: %f",tag[0],tag[1],tag[2]);	
-			twist_msg.linear.x= -tag[1];
-			twist_msg.linear.y= tag[0];
-			if(twist_msg.linear.x>0.1) {twist_msg.linear.x=0.1;}
-			if(twist_msg.linear.x<-0.1) {twist_msg.linear.x=-0.1;}
-			if(twist_msg.linear.y>0.1) {twist_msg.linear.y=0.1;}
-			if(twist_msg.linear.y<-0.1) {twist_msg.linear.y=-0.1;}
 
-//			twist_msg.linear.z= 0.1*(1.0-tag[2]; 
+			p_term.x=kp*tag[1];
+			p_term.y=kp*-tag[0];
+			d_term.x=kd*drone_vx;
+			d_term.y=kd*drone_vy;
+			twist_msg.linear.x=p_term.x-d_term.x;
+			twist_msg.linear.y=p_term.y-d_term.y;
 			twist_msg.linear.z= 0.0; 
-			twist_msg.angular.z=0.0;
-			ROS_INFO("Auto Drone commands x: %f y: %f z: %f",twist_msg.linear.x,twist_msg.linear.y,twist_msg.linear.z);
-
+			twist_msg.angular.z=p_term.y-d_term.y;
 			
+			if(twist_msg.linear.x>max_speed_twist) {twist_msg.linear.x=max_speed_twist;}
+			if(twist_msg.linear.x<-max_speed_twist) {twist_msg.linear.x=-max_speed_twist;}
+			if(twist_msg.linear.y>max_speed_twist) {twist_msg.linear.y=max_speed_twist;}
+			if(twist_msg.linear.y<-max_speed_twist) {twist_msg.linear.y=-max_speed_twist;}
+			if(twist_msg.angular.z>2*max_speed_twist) {twist_msg.angular.z=2*max_speed_twist;}
+			if(twist_msg.angular.z<-2*max_speed_twist) {twist_msg.angular.z=-2*max_speed_twist;}
+
+			ROS_INFO("Cont px: %f py: %f",p_term.x,p_term.y);
+			ROS_INFO("Cont dx: %f dy: %f",d_term.x,d_term.y);
+			
+			ROS_INFO("Auto Drone commands x: %f y: %f z: %f",twist_msg.linear.x,twist_msg.linear.y,twist_msg.angular.z);
+
+
+			v3_msg.x=twist_msg.linear.x;
+			v3_msg.y=twist_msg.linear.y;
+			v3_msg.z=twist_msg.linear.z;
+			pub_v3.publish(v3_msg);
+		
 			pub_twist.publish(twist_msg); //enable later
 			ros::spinOnce();
 			loop_rate.sleep();
 
 		}
-/*
-		if (joy_xb){
 
+		if (joy_xb){
+			merge_new_mgs();
+
+			ROS_INFO("Error x: %f y: %f z: %f",tag[0],tag[1],tag[2]);	
+
+			p_term.x=kp*tag[1];
+			p_term.y=kp*-tag[0];
+			d_term.x=kd*drone_vx;
+			d_term.y=kd*drone_vy;
 			
-			ROS_INFO("Auto Drone x: %f y: %f z: %f",tag_x,tag_y,tag_z);
-		twist_msg.linear.x= tag_x;
-		twist_msg.linear.y= tag_y;
-		twist_msg.linear.z= tag_z +1.0; //plus meters 
-		twist_msg.angular.z=0.0;
-		//pub_twist.publish(twist_msg); //enable later
+			twist_msg.linear.x= 0.0; 
+			twist_msg.linear.y= 0.0; 
+			twist_msg.linear.z= 0.0; 
+			twist_msg.angular.z=p_term.y-d_term.y;
+			pub_twist.publish(twist_msg);
+			ROS_INFO("ROT z: %f",twist_msg.angular.z);
+			
+			ros::spinOnce();
+			loop_rate.sleep();
 
 		}
-*/
+
 else{ //control via joystick
 
 		if (fabs(joy_x)<0.1) {joy_x =0;}

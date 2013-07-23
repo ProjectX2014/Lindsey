@@ -1,0 +1,10 @@
+<launch>
+
+<node pkg="Lindsey" type="Drone_test" name="Drone_Command" respawn="true"/> 
+
+<node pkg="joy" type="joy_node" name="Xbox_Controller" args="/dev/input/js0" respawn="true"/>
+
+<node pkg="Lindsey" type="Point2Point" name="P2P" respawn="true"/> 
+
+
+</launch>
