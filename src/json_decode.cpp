@@ -21,6 +21,12 @@ $ ln -s /usr/local/lib/libjansson.so.4 /usr/lib/libjansson.so.4
 #include <Lindsey/Tag.h>
 #include <ctime>
 
+//for timing
+#include <geometry_msgs/Vector3.h>
+#include <ros/time.h>
+ros::Time Time_old;
+//end tming
+
 /*Tag.h
 int16 NumTags
 int16[] Id
@@ -32,10 +38,13 @@ float32[] SmoPosY
 float32[] SmoPosZ
 */
 
-Lindsey::Tag QTags_old;
+double PosX_old =0;
+double PosY_old =0;
+double PosZ_old =0;
+
 int loop_times =0;
 int DEBUG =0;
-
+//std_msgs::Float32 timestep = 0.0;
 void merge_new_mgs(void){
 	
 	}
@@ -133,6 +142,7 @@ int main(int argc, char** argv)
 	int First_time = 1;
 	clock_t start, end;
 	ros::Publisher tag_msg = node.advertise<Lindsey::Tag>("Quuppa_raw", 1); 
+	ros::Publisher time_msg = node.advertise<geometry_msgs::Vector3>("Quuppa_timestep", 1); 
 
 	//ros::Subscriber nav_sub;	
 	//joy_sub = node.subscribe("joy", 1, joy_callback);
@@ -165,6 +175,7 @@ QTags.NumTags = number_tags;
 
 QTags.Id[number_tags];
 QTags.Name[number_tags];
+QTags.TimeStamp[number_tags];
 QTags.PosX[number_tags];
 QTags.PosY[number_tags];
 QTags.PosZ[number_tags];
@@ -198,6 +209,7 @@ QTags.SmoPosZ[number_tags];
 			smoothedPositionZ = json_object_get(data, "smoothedPositionZ");
 			id = json_object_get(data, "id");
 			name = json_object_get(data, "name");
+			//positionTimestampEpoch= json_object_get(data,"positionTimestampEpoc");
 			/*
 			if(!json_is_real(positionY))
 			message_text = json_string_value(name);
@@ -208,6 +220,19 @@ message_text = json_string_value(id);
 QTags.Id.push_back(message_text);
 message_text = json_string_value(name);
 QTags.Name.push_back(message_text);
+/*
+//if (json_is_object(positionTimestampEpoch)) { ROS_INFO("Time is obj");}
+
+//std::count << json_string_value(positionTimestampEpoch) << '\n';
+if (json_integer_value(positionTimestampEpoch)) {ROS_INFO("Time is int");}
+if (json_real_value(positionTimestampEpoch)) {ROS_INFO("Time is real");}
+if (json_is_number(positionTimestampEpoch)) {ROS_INFO("Time is num");}
+if (json_is_object(positionTimestampEpoch)) {ROS_INFO("Time is obj");}
+if (json_is_string(positionTimestampEpoch)) {ROS_INFO("Time is str");}
+if (json_is_null(positionTimestampEpoch)) {ROS_INFO("Time is null");}
+QTags.TimeStamp.push_back(json_number_value(positionTimestampEpoch));
+//ROS_INFO("Time raw %s",message_text.c_str());
+*/
 QTags.PosX.push_back(json_number_value(positionX));
 QTags.PosY.push_back(json_number_value(positionY));
 QTags.PosZ.push_back(json_number_value(positionZ));
@@ -227,9 +252,9 @@ QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 	
 //Check that the message is new
 		
-		if(First_time)
+	/*	if(First_time)
 				{
-				QTags_old=QTags;
+				TimeStamp_old=QTags.TimeStamp[0];
 				//DEBUB Print
 				if (DEBUG)
 				{
@@ -254,18 +279,29 @@ QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 				tag_msg.publish(QTags);
 				First_time =0;
 				}
-		else if (QTags.PosX==QTags_old.PosX && QTags.PosY==QTags_old.PosY && QTags.PosZ==QTags_old.PosZ)
-				{/* do nothing*/}
-		else 
+*/
+
+		if (0==(QTags.PosX[1]==PosX_old && QTags.PosY[1]==PosY_old && QTags.PosZ[1]==PosZ_old))//if new data, post it
 				{
-				QTags_old=QTags;
 				
+				
+				PosX_old=QTags.PosX[1];
+				PosY_old=QTags.PosY[1];
+				PosZ_old=QTags.PosZ[1];
 				tag_msg.publish(QTags);
+				
+				ros::Duration step=ros::Time::now()-Time_old;
+				geometry_msgs::Vector3 time_step;
+				time_step.x=step.toSec();
+		
+				time_msg.publish(time_step);
+				Time_old=ros::Time::now();
+				
 				}	
-		if (DEBUG) {printf("Checked for Tags %i Times \n",loop_times);}
+
+		//if (DEBUG) {printf("Checked for Tags %i Times \n",loop_times);}
 		
 		//ros::spinOnce();
-		tag_msg.publish(QTags);
 		//ROS_INFO("Loop Check End");
 		loop_rate.sleep();
 
