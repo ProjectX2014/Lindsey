@@ -25,6 +25,8 @@ $ ln -s /usr/local/lib/libjansson.so.4 /usr/lib/libjansson.so.4
 #include <geometry_msgs/Vector3.h>
 #include <ros/time.h>
 ros::Time Time_old;
+geometry_msgs::Vector3 time_step;
+int measure_time =1;
 //end tming
 
 /*Tag.h
@@ -38,9 +40,9 @@ float32[] SmoPosY
 float32[] SmoPosZ
 */
 
-double PosX_old =0;
-double PosY_old =0;
-double PosZ_old =0;
+double PosX_old =0.0;
+double PosY_old =0.0;
+double PosZ_old =0.0;
 
 int loop_times =0;
 int DEBUG =0;
@@ -139,16 +141,18 @@ int main(int argc, char** argv)
 	json_t *root;
    	json_error_t error;
 	
-	int First_time = 1;
-	clock_t start, end;
+	//int First_time = 1;
+	//clock_t start, end;
 	ros::Publisher tag_msg = node.advertise<Lindsey::Tag>("Quuppa_raw", 1); 
-	ros::Publisher time_msg = node.advertise<geometry_msgs::Vector3>("Quuppa_timestep", 1); 
+	ros::Publisher time_msg = node.advertise<geometry_msgs::Vector3>("Json_timestep", 1); 
 
 	//ros::Subscriber nav_sub;	
 	//joy_sub = node.subscribe("joy", 1, joy_callback);
 	
    	//ROS_INFO("Json tag Node");
  	while (ros::ok()) {
+
+
 		//ROS_INFO("Loop Check");
 		Lindsey::Tag QTags; //custom tag message
 		text = request(url);
@@ -175,25 +179,32 @@ QTags.NumTags = number_tags;
 
 QTags.Id[number_tags];
 QTags.Name[number_tags];
-QTags.TimeStamp[number_tags];
+//QTags.TimeStamp[number_tags];
 QTags.PosX[number_tags];
+//QTags.PosX[1]=0.0;
 QTags.PosY[number_tags];
+//QTags.PosY[1]=0.0;
 QTags.PosZ[number_tags];
+//QTags.PosY[1]=0.0;
 QTags.SmoPosX[number_tags];
 QTags.SmoPosY[number_tags];
 QTags.SmoPosZ[number_tags];
 
+
+
 //start = clock(); //for timing
 		 for(i = 0; i < json_array_size(root); i++)
 		{
-		    json_t *data, *positionY, *positionZ, *smoothedPositionZ, *smoothedPositionY, *smoothedPositionX, *areaId, *positionAccuracy, *id, *areaName, *color, *positionX, *name, *positionTimestampEpoch, *positionTimestamp;
+		    json_t *data, *positionY, *positionZ, *smoothedPositionZ, *smoothedPositionY, *smoothedPositionX, *id,*positionX, *name, *positionTimestampEpoch;
+
+//json_t *areaId, *positionAccuracy,  *areaName, *color, *positionX, *name, *positionTimestamp;
 			
 		    const char *message_text;
 
 		    data = json_array_get(root, i); //take ith slice of the data, in our case first tag
 		    if(!json_is_object(data)) //check if its valid
 		    {
-		        fprintf(stderr, "error: quuppa data %i is not an object\n", i + 1);
+		        ROS_ERROR("error: quuppa data %i is not an object\n", i + 1);
 		        return 1;
 		    }
 			
@@ -209,7 +220,8 @@ QTags.SmoPosZ[number_tags];
 			smoothedPositionZ = json_object_get(data, "smoothedPositionZ");
 			id = json_object_get(data, "id");
 			name = json_object_get(data, "name");
-			//positionTimestampEpoch= json_object_get(data,"positionTimestampEpoc");
+			positionTimestampEpoch= json_object_get(data,"positionTimestampEpoc");
+			//std::cout <<positionTimestampEpoch <<'\n';
 			/*
 			if(!json_is_real(positionY))
 			message_text = json_string_value(name);
@@ -242,45 +254,13 @@ QTags.SmoPosY.push_back(json_number_value(smoothedPositionY));
 QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 
 }
-//end = clock();//for timing
-//std::cout << "Start" << start  << '\n';
-//std::cout << "End " << float(start / CLOCKS_PER_SEC) << '\n';
-//std::cout << "Process took " << (double(end - start) / CLOCKS_PER_SEC) << "seconds" << '\n';
 
 	json_decref(root); //free up the memory taken up by the root
 	loop_times++;
 	
+
 //Check that the message is new
 		
-	/*	if(First_time)
-				{
-				TimeStamp_old=QTags.TimeStamp[0];
-				//DEBUB Print
-				if (DEBUG)
-				{
-					for(i = 0; i < QTags.NumTags; i++)
-						{
-						printf("Start of tag: %i \n",i);
-						printf("ID : %i \n",QTags.Id[i].c_str());
-						printf("Name : %s \n",QTags.Name[i].c_str());
-						printf("PosX tag: %f \n",QTags.PosX[i]);
-						printf("PosY tag: %f \n",QTags.PosY[i]);
-						printf("PosZ tag: %f \n",QTags.PosZ[i]);
-						printf("SmoPosX tag: %f \n",QTags.SmoPosX[i]);
-						printf("SmoPosy tag: %f \n",QTags.SmoPosY[i]);
-						printf("SmoPosZ tag: %f \n",QTags.SmoPosZ[i]);
-						//printf("End of tag \n");
-						printf("------------\n");
-						}
-					printf("End of column \n");
-					printf("=========== \n");
-				}
-				//END DEBUG
-				tag_msg.publish(QTags);
-				First_time =0;
-				}
-*/
-
 		if (0==(QTags.PosX[1]==PosX_old && QTags.PosY[1]==PosY_old && QTags.PosZ[1]==PosZ_old))//if new data, post it
 				{
 				
@@ -289,15 +269,17 @@ QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 				PosY_old=QTags.PosY[1];
 				PosZ_old=QTags.PosZ[1];
 				tag_msg.publish(QTags);
-				
+					
+
+		if(measure_time)
+				{
+				//timing stuff
 				ros::Duration step=ros::Time::now()-Time_old;
-				geometry_msgs::Vector3 time_step;
 				time_step.x=step.toSec();
-		
 				time_msg.publish(time_step);
-				Time_old=ros::Time::now();
-				
-				}	
+				Time_old= ros::Time::now();
+				}
+					}	
 
 		//if (DEBUG) {printf("Checked for Tags %i Times \n",loop_times);}
 		
@@ -307,6 +289,6 @@ QTags.SmoPosZ.push_back(json_number_value(smoothedPositionZ));
 
 		}//ros::ok
 
-ROS_ERROR("ROS::ok failed- Node Closing");
+ROS_ERROR("ROS::ok failed- Json Node Closing");
     return 0;
 }//main

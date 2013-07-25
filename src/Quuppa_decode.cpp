@@ -13,6 +13,11 @@
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <Lindsey/Tag.h>
+#include <ros/time.h>
+ros::Time Time_old;
+int measure_time =1;
+ros::Duration step;
+geometry_msgs::Vector3 time_step;
 
 /*Tag.h
 int16 NumTags
@@ -149,10 +154,11 @@ int i=0;//for the for loop
 ros::Subscriber tag_sub = node.subscribe("Quuppa_raw", 1, tag_callback);
 ros::Subscriber nav_sub = node.subscribe("ardrone/navdata", 1, nav_callback);	
 
+ros::Publisher time_msg = node.advertise<geometry_msgs::Vector3>("Quuppa_timestep", 1);
 ros::Publisher tag_pub = node.advertise<geometry_msgs::Vector3> ("Quuppa_analy", 1);
 ros::Publisher odom_uav_pub = node.advertise<nav_msgs::Odometry> ("UAV/vo", 1);
 ros::Publisher odom_trackee_pub = node.advertise<nav_msgs::Odometry> ("Trackee/vo", 1);
-ros::Publisher pub_v3 = node.advertise<geometry_msgs::Vector3>("UAV_Pos", 1);
+//ros::Publisher pub_v3 = node.advertise<geometry_msgs::Vector3>("UAV_Pos", 1);
 
 tf::Transform transform;
 
@@ -161,7 +167,6 @@ nav_msgs::Odometry odom_uav_data;
 nav_msgs::Odometry odom_trackee_data;
 geometry_msgs::Vector3 inspect;
 geometry_msgs::Vector3 est_location;
-
 
 while ( (had_message_1 ==0) )
 	{
@@ -175,43 +180,16 @@ while ( (had_message_1 ==0) )
 
 while(ros::ok() && had_message_1){
 
-/*
-		//merge messages (may be really slow.... so not doing it now)
-		
-		
-		number_tags=tag_in_.NumTags;
-		if (change_tag_number){ //if numbers are the same
-
-			QTags_local.Id[number_tags];
-			QTags_local.Name[number_tags];
-			QTags_local.PosX[number_tags];
-			QTags_local.PosY[number_tags];
-			QTags_local.PosZ[number_tags];
-			QTags_local.SmoPosX[number_tags];
-			QTags_local.SmoPosY[number_tags];
-			QTags_local.SmoPosZ[number_tags];
-			number_tags_old=number_tags;
-
-		//
-		QTags_local=QTags;
-*/
-
-		
-		
-		/*   Do math to convert:
-		 raw tag codes to relative uav + tracked 
-		Set course markers 
-		Extract velocity from tracked target */
-		
+Time_old= ros::Time::now();
 		for(i = 0; i < QTags.NumTags; i++)
 		
 		
 			{
-			//ROS_INFO("Tag %i is %s",i,QTags.Id[i].c_str());
 				
 			if (0==uav_name.compare( QTags.Id[i].c_str() ) )
 				{//track with ekf
 				//ROS_INFO("UAV on tag %i",i);
+/*
 				odom_uav_data.header.stamp= ros::Time::now();
 				odom_uav_data.header.frame_id = "UAV";   // the tracked robot frame
 		 		odom_uav_data.pose.pose.position.x = QTags.SmoPosX[i];         // x measurement Quuppa.
@@ -233,13 +211,13 @@ while(ros::ok() && had_message_1){
 
 				//create tf smo
 				transform.setOrigin( tf::Vector3(QTags.SmoPosX[i],QTags.SmoPosY[i],QTags.SmoPosZ[i]) );
-				transform.setRotation( tf::Quaternion(0,0,RotZ) );
+				
 				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "UAV_Smo"));
 				//create tf raw
 				transform.setOrigin( tf::Vector3(QTags.PosX[i],QTags.PosY[i],QTags.PosZ[i]) );
 				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "UAV_Raw"));
 				//output data straight to controller
-				
+	*/			
 				//super smooth
 				
 				float x_lpf=lpf(QTags.PosX[i],x_old[0],max);
@@ -248,16 +226,13 @@ while(ros::ok() && had_message_1){
 				x_old[0]=x_lpf;
 				y_old[0]=y_lpf;
 				z_old[0]=z_lpf;
-			//	odom_uav_data.pose.pose.position.x=x_lpf;
-			//	odom_uav_data.pose.pose.position.y=y_lpf;
-		//		odom_uav_data.pose.pose.position.z=z_lpf;
-				//odom_uav_pub.publish(odom_uav_data);
-				est_location.x=x_lpf;
-				est_location.y=y_lpf;
-				est_location.z=z_lpf;
-				pub_v3.publish(est_location);
 
+				//est_location.x=x_lpf;
+				//est_location.y=y_lpf;
+				//est_location.z=z_lpf;
+				//pub_v3.publish(est_location);
 
+				transform.setRotation( tf::Quaternion(0,0,RotZ) );
 				transform.setOrigin( tf::Vector3(x_lpf,y_lpf,z_lpf) );
 				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "UAV_LPF"));
 
@@ -266,6 +241,7 @@ while(ros::ok() && had_message_1){
 			 if (0==trackee_name.compare( QTags.Id[i].c_str() ) )
 				{//track with ekf
 				//ROS_INFO("Trackee on tag %i",i);
+/*
 				odom_trackee_data.header.stamp= ros::Time::now();
 				odom_trackee_data.header.frame_id = "Trackee";   // the tracked robot frame
 		 		//odom_trackee_data.pose.pose.position.x = QTags.PosX[i];         // x measurement Quuppa.
@@ -286,14 +262,15 @@ while(ros::ok() && had_message_1){
 				odom_trackee_data.pose.covariance[21] =9999.0;
 				odom_trackee_data.pose.covariance[28] =9999.0;
 				odom_trackee_data.pose.covariance[35] =9999.0;
+*/
 				//send trackee data				
 					//odom_trackee_pub.publish(odom_trackee_data);
 				//create tf
 				//smo
 
-				transform.setOrigin( tf::Vector3(QTags.SmoPosX[i],QTags.SmoPosY[i],QTags.SmoPosZ[i]) );
-				transform.setRotation( tf::Quaternion(0,0,0) );
-				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "Trackee_Smo"));
+//				transform.setOrigin( tf::Vector3(QTags.SmoPosX[i],QTags.SmoPosY[i],QTags.SmoPosZ[i]) );
+//				transform.setRotation( tf::Quaternion(0,0,0) );
+//				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "Trackee_Smo"));
 			/*	//raw
 				transform.setOrigin( tf::Vector3(QTags.PosX[i],QTags.PosY[i],QTags.PosZ[i]) );
 				transform.setRotation( tf::Quaternion(0,0,0) );
@@ -311,16 +288,24 @@ while(ros::ok() && had_message_1){
 				odom_trackee_data.pose.pose.position.z=z_lpf;
 				odom_trackee_pub.publish(odom_trackee_data);
 
-/*				transform.setOrigin( tf::Vector3(x_lpf,y_lpf,z_lpf) );
+				transform.setOrigin( tf::Vector3(x_lpf,y_lpf,z_lpf) );
 				transform.setRotation( tf::Quaternion(0,0,0) );
 				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "Trackee_LPF"));
-*/
+
 				}//end trackee
 
 			}// end if
+ros::spinOnce();
+		
+if(measure_time)
+{
+				step=ros::Time::now()-Time_old;
+				time_step.x=step.toSec();
+				time_msg.publish(time_step);
+}
+loop_rate.sleep();
 
-		ros::spinOnce();
-		loop_rate.sleep();
+		
 } //end ros::ok
 return 0;
 } //end main

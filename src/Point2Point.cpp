@@ -4,8 +4,11 @@
 #include <tf/transform_listener.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Vector3.h>
-//#include <tf/StampedTransform.h>
-
+#include <ros/time.h>
+ros::Time Time_old;
+int measure_time =1;
+ros::Duration step;
+geometry_msgs::Vector3 time_step;
 
 int had_message_1=0;
 int had_message_2=0;
@@ -31,36 +34,40 @@ void tracking_callback(const geometry_msgs::Vector3& msg)
 
 int main(int argc, char** argv){
 
-ros::init(argc, argv, "Point2Point");
+ros::init(argc, argv, "Point2Point_Node");
 ros::NodeHandle node;
 ros::Rate loop_rate(100);
 
-ros::Subscriber track_sub = node.subscribe("UAV_Pos", 1, tracking_callback);
+//ros::Subscriber track_sub = node.subscribe("UAV_Pos", 1, tracking_callback);
 ros::Publisher pub_v3 = node.advertise<geometry_msgs::Vector3>("Point2Point", 1);
 ros::Publisher next_pub_v3 = node.advertise<geometry_msgs::Vector3>("NextPoint", 1);
+ros::Publisher time_msg = node.advertise<geometry_msgs::Vector3>("P2P_timestep", 1);
+
 geometry_msgs::Vector3 next_point;
 geometry_msgs::Vector3 error;
 tf::TransformBroadcaster br;
 tf::TransformListener listener;
 tf::Transform transform;
 tf::StampedTransform err_transform;
+tf::StampedTransform away_transform;
+tf::StampedTransform yaw_transform;
 transform.setRotation( tf::Quaternion(0,0,0) );
 int point =0;
 
 ROS_INFO("P2P: waiting for message");
+/*
 while ( (had_message_1 ==0))
 	{
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
-ROS_INFO("P2P: waiting starting");
-while(ros::ok() && (had_message_1==1)){
-				//merge messages
-				tag[0]=tag_[0];
-				tag[1]=tag_[1];
-				tag[2]=tag_[2];
-				//how far away
-
+*/
+ROS_INFO("P2P: starting");
+while(ros::ok() ){
+	Time_old= ros::Time::now();
+	
+						if (point ==0)      {cur_tag[0]=init[0]; cur_tag[1]=init[1]; cur_tag[2]=init[2];}//init
+/*
 				if (point ==0)      {cur_tag[0]=init[0]; cur_tag[1]=init[1]; cur_tag[2]=init[2];}//init
 				else if (point ==1) {cur_tag[0]=mid[0]; cur_tag[1]=mid[1]; cur_tag[2]=mid[2];} //mid
 				else if (point ==2) {cur_tag[0]=mid1[0]; cur_tag[1]=mid1[1]; cur_tag[2]=mid1[2];}//mid1
@@ -69,19 +76,13 @@ while(ros::ok() && (had_message_1==1)){
 				else if (point ==5) {cur_tag[0]=mid4[0]; cur_tag[1]=mid4[1]; cur_tag[2]=mid4[2];}//mid4
 				else if (point ==6) {cur_tag[0]=mid[0]; cur_tag[1]=mid[1]; cur_tag[2]=mid[2];}//mid
 				else if (point ==7) {cur_tag[0]=init[0]; cur_tag[1]=init[1]; cur_tag[2]=init[2];}//init
-				else if (point > 7) {/*done*/}
-				float away= sqrt((tag[0]-cur_tag[0])*(tag[0]-cur_tag[0]) +(tag[1]-cur_tag[1])*(tag[1]-cur_tag[1])); //l2 norm
-				//Change desired point in terms of where the UAV is 
+				else if (point > 7) {/*done*/ //}
 				
-				if (away <0.25){ point++;}
-				ROS_INFO("away : %f",away);
-				next_point.x=cur_tag[0];
-				next_point.y=cur_tag[1];
-				next_point.z=cur_tag[2];
+				//Place desired Point in space
 				transform.setOrigin( tf::Vector3(cur_tag[0],cur_tag[1],cur_tag[2]) );
 				br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "Des_Pos"));
-
-				next_pub_v3.publish(next_point);
+				
+				//Measure error between desired point and uav
 try{
 				listener.lookupTransform("UAV_LPF", "Des_Pos", ros::Time(0), err_transform); //could also be ekf_output_UAV
 }
@@ -92,6 +93,31 @@ catch (tf::TransformException ex){
 				error.y=err_transform.getOrigin().y();
 				error.z=err_transform.getOrigin().z();
 				pub_v3.publish(error);
+
+				//Change desired point in terms of where the UAV is 
+				float away= sqrt(err_transform.getOrigin().x()*err_transform.getOrigin().x() +err_transform.getOrigin().y()*err_transform.getOrigin().y()); //l2 norm
+				if (away <0.25){ point++; ROS_INFO("Changing Desired Point");}
+
+				//measure transform between uav and trackee for yaw
+try{
+				listener.lookupTransform("UAV_LPF","Trackee_LPF", ros::Time(0), yaw_transform); //could also be ekf_output_UAV
+}
+catch (tf::TransformException ex){
+        ROS_ERROR("%s",ex.what());
+     }
+				next_point.x=yaw_transform.getOrigin().x();
+				next_point.y=yaw_transform.getOrigin().y();
+				next_point.z=yaw_transform.getOrigin().z();
+				next_pub_v3.publish(next_point);
+
+
+if(measure_time)
+{
+				step=ros::Time::now()-Time_old;
+				time_step.x=step.toSec();
+				time_msg.publish(time_step);
+				std::cout<< "things " <<"\n";
+}
 				//SPIN		
 				ros::spinOnce();
 				loop_rate.sleep();

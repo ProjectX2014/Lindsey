@@ -12,6 +12,11 @@ It is intended as a simple example for those starting with the AR Drone platform
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Vector3.h>
 #include <ardrone_autonomy/Navdata.h>
+#include <ros/time.h>
+ros::Time Time_old;
+int measure_time =1;
+ros::Duration step;
+geometry_msgs::Vector3 time_step;
 
 double max_speed = 1.0; //[m/s]
 double max_speed_yaw = 0.5; //[m/s2]
@@ -31,6 +36,9 @@ double drone_ax, drone_ay , drone_az, drone_altd;
 
 float tag[] = {0.0,0.0,0.0};
 float tag_[] = {0.0,0.0,0.0};
+
+float next_tag[] = {0.0,0.0,0.0};
+float next_tag_[] = {0.0,0.0,0.0};
 
 double cmd_x,cmd_y,cmd_z,cmd_yaw;
 int new_msg=0;
@@ -107,6 +115,9 @@ void merge_new_mgs(void){
 		tag[0]=tag_[0];
 		tag[1]=tag_[1];
 		tag[2]=tag_[2];
+		next_tag[0]=next_tag_[0];
+		next_tag[1]=next_tag_[1];
+		next_tag[2]=next_tag_[2];
 	}
 
 void tracking_callback(const geometry_msgs::Vector3& msg)
@@ -114,6 +125,13 @@ void tracking_callback(const geometry_msgs::Vector3& msg)
 	tag_[0]=msg.x;
 	tag_[1]=msg.y;
 	tag_[2]=msg.z; //meters
+}
+
+void next_tracking_callback(const geometry_msgs::Vector3& msg)
+{
+	next_tag_[0]=msg.x;
+	next_tag_[1]=msg.y;
+	next_tag_[2]=msg.z; //meters
 }
 
 
@@ -139,11 +157,14 @@ int main(int argc, char** argv)
 	pub_empty_takeoff = node.advertise<std_msgs::Empty>("ardrone/takeoff", 1);
 	pub_empty_land = node.advertise<std_msgs::Empty>("ardrone/land", 1);
 	ros::Subscriber track_sub = node.subscribe("Point2Point", 1, tracking_callback);
+	ros::Subscriber next_track_sub = node.subscribe("NextPoint", 1, next_tracking_callback);
+	ros::Publisher time_msg = node.advertise<geometry_msgs::Vector3>("Drone_timestep", 1);
 	geometry_msgs::Vector3 p_term;
 	geometry_msgs::Vector3 d_term;
 
     ROS_INFO("Starting Test Node, /cmd_vel = f(joy)");
  	while (ros::ok()) {
+		Time_old= ros::Time::now();
 		merge_new_mgs();
 		//commands to change state of drone
 		if (joy_a){
@@ -177,7 +198,7 @@ int main(int argc, char** argv)
 		}
 		
 		if (joy_yb){
-
+			//position hold and track point
 			merge_new_mgs();
 
 			ROS_INFO("Error x: %f y: %f z: %f",tag[0],tag[1],tag[2]);	
@@ -186,10 +207,11 @@ int main(int argc, char** argv)
 			p_term.y=kp*-tag[0];
 			d_term.x=kd*drone_vx;
 			d_term.y=kd*drone_vy;
+
 			twist_msg.linear.x=p_term.x-d_term.x;
 			twist_msg.linear.y=p_term.y-d_term.y;
 			twist_msg.linear.z= 0.0; 
-			twist_msg.angular.z=p_term.y-d_term.y;
+			twist_msg.angular.z=(kp*-next_tag[0]);
 			
 			if(twist_msg.linear.x>max_speed_twist) {twist_msg.linear.x=max_speed_twist;}
 			if(twist_msg.linear.x<-max_speed_twist) {twist_msg.linear.x=-max_speed_twist;}
@@ -216,10 +238,11 @@ int main(int argc, char** argv)
 		}
 
 		if (joy_xb){
+			//Track point via yaw
 			merge_new_mgs();
 
 			ROS_INFO("Error x: %f y: %f z: %f",tag[0],tag[1],tag[2]);	
-
+			ROS_INFO("Rot commands z: %f",twist_msg.angular.z);
 			p_term.x=kp*tag[1];
 			p_term.y=kp*-tag[0];
 			d_term.x=kd*drone_vx;
@@ -228,7 +251,7 @@ int main(int argc, char** argv)
 			twist_msg.linear.x= 0.0; 
 			twist_msg.linear.y= 0.0; 
 			twist_msg.linear.z= 0.0; 
-			twist_msg.angular.z=p_term.y-d_term.y;
+			twist_msg.angular.z=(kp*-next_tag[0]);
 			pub_twist.publish(twist_msg);
 			ROS_INFO("ROT z: %f",twist_msg.angular.z);
 			
@@ -272,6 +295,13 @@ else{ //control via joystick
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
+if(measure_time)
+{
+				step=ros::Time::now()-Time_old;
+				time_step.x=step.toSec();
+				time_msg.publish(time_step);
+}
+
 		}//ros::ok
 ROS_ERROR("ROS::ok failed- Node Closing");
 }//main
