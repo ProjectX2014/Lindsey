@@ -38,7 +38,7 @@ int main(int argc, char** argv){
 
 ros::init(argc, argv, "Point2Point_Node");
 ros::NodeHandle node;
-ros::Rate loop_rate(200);
+ros::Rate loop_rate(250);
 
 //ros::Subscriber track_sub = node.subscribe("UAV_Pos", 1, tracking_callback);
 ros::Publisher pub_v3 = node.advertise<geometry_msgs::Vector3>("Point2Point", 1);
@@ -86,7 +86,7 @@ while(ros::ok() ){
 				
 				//Measure error between desired point and uav
 try{
-				listener.lookupTransform(QUADTF, "Des_Pos", ros::Time(0), err_transform); //could also be ekf_output_UAV
+				listener.lookupTransform(QUADTF, "Des_Pos", ros::Time(0), err_transform); 
 }
 catch (tf::TransformException ex){
         ROS_ERROR("%s",ex.what());

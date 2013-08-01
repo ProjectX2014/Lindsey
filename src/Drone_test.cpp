@@ -48,7 +48,7 @@ int drone_state =0;
 // state: {0 is failure, 2 is landed, 3 is flying, 4 is hovering, 6 taking off, 8 landing}
 float forget =0.99;
 float kp=.15;
-float kd= .05;
+float kd= 5.0;
 float max_speed_twist =0.4;
 float tag_x_old =0;
 float tag_y_old =0;
@@ -211,7 +211,7 @@ int main(int argc, char** argv)
 			p_term.y=kp*-tag[0];
 			d_term.x=kd*((tag[1]-tag_x_old)/ROSHZ);
 			d_term.y=kd*((tag[0]-tag_y_old)/ROSHZ);
-
+			ROS_INFO("DX dx: %f dy: %f",d_term.x,d_term.y);
 			twist_msg.linear.x=p_term.x-d_term.x;
 			twist_msg.linear.y=p_term.y-d_term.y;
 			twist_msg.linear.z= 0.0; 
