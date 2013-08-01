@@ -13,6 +13,8 @@ It is intended as a simple example for those starting with the AR Drone platform
 #include <geometry_msgs/Vector3.h>
 #include <ardrone_autonomy/Navdata.h>
 #include <ros/time.h>
+#define ROSHZ 200
+
 ros::Time Time_old;
 int measure_time =1;
 ros::Duration step;
@@ -45,9 +47,11 @@ int new_msg=0;
 int drone_state =0; 
 // state: {0 is failure, 2 is landed, 3 is flying, 4 is hovering, 6 taking off, 8 landing}
 float forget =0.99;
-float kp=1;
-float kd= .5;
-float max_speed_twist =0.2;
+float kp=.15;
+float kd= .05;
+float max_speed_twist =0.4;
+float tag_x_old =0;
+float tag_y_old =0;
 //double joy_x_old,joy_y_old,joy_z_old;
 geometry_msgs::Twist twist_msg;
 std_msgs::Empty emp_msg;
@@ -139,7 +143,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv,"ARDrone_fly_from_joy");
     	ros::NodeHandle node;
-   	ros::Rate loop_rate(100);
+   	ros::Rate loop_rate(ROSHZ);
 	ros::Publisher pub_twist;
 	ros::Publisher pub_empty_reset;
 	ros::Publisher pub_empty_land;
@@ -197,7 +201,7 @@ int main(int argc, char** argv)
 			}//drone take off	
 		}
 		
-		if (joy_yb){
+		while (joy_yb){
 			//position hold and track point
 			merge_new_mgs();
 
@@ -205,14 +209,15 @@ int main(int argc, char** argv)
 
 			p_term.x=kp*tag[1];
 			p_term.y=kp*-tag[0];
-			d_term.x=kd*drone_vx;
-			d_term.y=kd*drone_vy;
+			d_term.x=kd*((tag[1]-tag_x_old)/ROSHZ);
+			d_term.y=kd*((tag[0]-tag_y_old)/ROSHZ);
 
 			twist_msg.linear.x=p_term.x-d_term.x;
 			twist_msg.linear.y=p_term.y-d_term.y;
 			twist_msg.linear.z= 0.0; 
-			twist_msg.angular.z=(kp*-next_tag[0]);
-			
+			//twist_msg.angular.z=(kp*-next_tag[0]);
+			twist_msg.angular.z=0.0;
+
 			if(twist_msg.linear.x>max_speed_twist) {twist_msg.linear.x=max_speed_twist;}
 			if(twist_msg.linear.x<-max_speed_twist) {twist_msg.linear.x=-max_speed_twist;}
 			if(twist_msg.linear.y>max_speed_twist) {twist_msg.linear.y=max_speed_twist;}
@@ -231,13 +236,15 @@ int main(int argc, char** argv)
 			v3_msg.z=twist_msg.linear.z;
 			pub_v3.publish(v3_msg);
 		
-			pub_twist.publish(twist_msg); //enable later
+			pub_twist.publish(twist_msg); 
+			tag_x_old=tag[1];
+			tag_y_old=tag[0]; 
 			ros::spinOnce();
 			loop_rate.sleep();
 
 		}
 
-		if (joy_xb){
+		while (joy_xb){
 			//Track point via yaw
 			merge_new_mgs();
 
@@ -260,7 +267,7 @@ int main(int argc, char** argv)
 
 		}
 
-else{ //control via joystick
+//else{ //control via joystick
 
 		if (fabs(joy_x)<0.1) {joy_x =0;}
 		//else {joy_x=joy_x*forget+joy_x_old*(1-forget);} //smoothing via forget
@@ -294,7 +301,7 @@ else{ //control via joystick
 
 		ros::spinOnce();
 		loop_rate.sleep();
-	}
+	//}
 if(measure_time)
 {
 				step=ros::Time::now()-Time_old;

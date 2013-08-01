@@ -6,5 +6,4 @@
 
 <node pkg="Lindsey" type="Point2Point" name="P2P" respawn="true"/> 
 
-
 </launch>

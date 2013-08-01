@@ -5,6 +5,8 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Vector3.h>
 #include <ros/time.h>
+#define QUADTF "vicon/Quad/Quad"
+#define TRACKEETF "vicon/Roombu/Roomba"
 ros::Time Time_old;
 int measure_time =1;
 ros::Duration step;
@@ -36,7 +38,7 @@ int main(int argc, char** argv){
 
 ros::init(argc, argv, "Point2Point_Node");
 ros::NodeHandle node;
-ros::Rate loop_rate(100);
+ros::Rate loop_rate(200);
 
 //ros::Subscriber track_sub = node.subscribe("UAV_Pos", 1, tracking_callback);
 ros::Publisher pub_v3 = node.advertise<geometry_msgs::Vector3>("Point2Point", 1);
@@ -84,7 +86,7 @@ while(ros::ok() ){
 				
 				//Measure error between desired point and uav
 try{
-				listener.lookupTransform("UAV_LPF", "Des_Pos", ros::Time(0), err_transform); //could also be ekf_output_UAV
+				listener.lookupTransform(QUADTF, "Des_Pos", ros::Time(0), err_transform); //could also be ekf_output_UAV
 }
 catch (tf::TransformException ex){
         ROS_ERROR("%s",ex.what());
@@ -99,8 +101,9 @@ catch (tf::TransformException ex){
 				if (away <0.25){ point++; ROS_INFO("Changing Desired Point");}
 
 				//measure transform between uav and trackee for yaw
+/*
 try{
-				listener.lookupTransform("UAV_LPF","Trackee_LPF", ros::Time(0), yaw_transform); //could also be ekf_output_UAV
+				listener.lookupTransform(QUADTF,TRACKEETF, ros::Time(0), yaw_transform); //could also be ekf_output_UAV
 }
 catch (tf::TransformException ex){
         ROS_ERROR("%s",ex.what());
@@ -110,7 +113,7 @@ catch (tf::TransformException ex){
 				next_point.z=yaw_transform.getOrigin().z();
 				next_pub_v3.publish(next_point);
 
-
+*/
 if(measure_time)
 {
 				step=ros::Time::now()-Time_old;
