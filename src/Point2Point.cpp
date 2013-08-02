@@ -56,20 +56,23 @@ tf::StampedTransform yaw_transform;
 transform.setRotation( tf::Quaternion(0,0,0) );
 int point =0;
 
+double timer = 9999999;
 ROS_INFO("P2P: waiting for message");
 /*
-while ( (had_message_1 ==0))
+while ( (timer<.5))
 	{
+		step=ros::Time::now()-Time_old;
+		timer=step.toSec();
 		ros::spinOnce();
 		loop_rate.sleep();
 	}
 */
+ros::Time Time_start= ros::Time::now();
 ROS_INFO("P2P: starting");
 while(ros::ok() ){
-	Time_old= ros::Time::now();
 	
-						if (point ==0)      {cur_tag[0]=init[0]; cur_tag[1]=init[1]; cur_tag[2]=init[2];}//init
-/*
+	
+	
 				if (point ==0)      {cur_tag[0]=init[0]; cur_tag[1]=init[1]; cur_tag[2]=init[2];}//init
 				else if (point ==1) {cur_tag[0]=mid[0]; cur_tag[1]=mid[1]; cur_tag[2]=mid[2];} //mid
 				else if (point ==2) {cur_tag[0]=mid1[0]; cur_tag[1]=mid1[1]; cur_tag[2]=mid1[2];}//mid1
@@ -78,7 +81,7 @@ while(ros::ok() ){
 				else if (point ==5) {cur_tag[0]=mid4[0]; cur_tag[1]=mid4[1]; cur_tag[2]=mid4[2];}//mid4
 				else if (point ==6) {cur_tag[0]=mid[0]; cur_tag[1]=mid[1]; cur_tag[2]=mid[2];}//mid
 				else if (point ==7) {cur_tag[0]=init[0]; cur_tag[1]=init[1]; cur_tag[2]=init[2];}//init
-				else if (point > 7) {/*done*/ //}
+				else if (point > 7) {point=0;}
 				
 				//Place desired Point in space
 				transform.setOrigin( tf::Vector3(cur_tag[0],cur_tag[1],cur_tag[2]) );
@@ -86,6 +89,7 @@ while(ros::ok() ){
 				
 				//Measure error between desired point and uav
 try{
+				//listener.waitForTransform(QUADTF,"Des_Pos", ros::Time(0), ros::Duration(.5) );
 				listener.lookupTransform(QUADTF, "Des_Pos", ros::Time(0), err_transform); 
 }
 catch (tf::TransformException ex){
@@ -97,9 +101,21 @@ catch (tf::TransformException ex){
 				pub_v3.publish(error);
 
 				//Change desired point in terms of where the UAV is 
-				float away= sqrt(err_transform.getOrigin().x()*err_transform.getOrigin().x() +err_transform.getOrigin().y()*err_transform.getOrigin().y()); //l2 norm
-				if (away <0.25){ point++; ROS_INFO("Changing Desired Point");}
-
+				float away= sqrt(error.x*error.x+error.y*error.y); //l2 norm
+						
+				step=ros::Time::now()-Time_start;
+				timer=step.toSec();
+				//ROS_INFO("P2P timer: %f",timer);
+				if (timer >.2){
+						ROS_INFO("P2P point: %i",point);
+							if (away <0.25){ 
+								point++; 
+								ROS_INFO("P2P Changing Desired Point");
+								ROS_INFO("P2P away: %f",away);
+								ROS_INFO("P2P point: %i",point);
+								Time_start= ros::Time::now();}
+						
+						}
 				//measure transform between uav and trackee for yaw
 /*
 try{

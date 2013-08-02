@@ -6,4 +6,9 @@
 
 <node pkg="Lindsey" type="Point2Point" name="P2P" respawn="true"/> 
 
+<!--<node pkg="rxtools" type="rxplot" output="screen" name="rxplot" args="
+	-t 'Error in X' 
+	-l meters
+	-b 100 /Point2Point/y" respawn="true" /> -->
+
 </launch>
