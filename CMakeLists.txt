@@ -33,6 +33,7 @@ find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 add_definitions(${EIGEN_DEFINITIONS})
 INCLUDE (FindCURL) 
+#ros_add_boost_directories()
 
 #rosbuild_add_executable(Kalman_filter src/kalman.cpp)
 rosbuild_add_executable(Drone_test src/Drone_test.cpp)
@@ -44,6 +45,9 @@ rosbuild_add_executable(Listen src/csv_listener.cpp)
 #rosbuild_add_executable(TF_odom src/tf_from_odom.cpp)
 #rosbuild_add_executable(Orient src/orient.cpp)
 rosbuild_add_executable(Quuppa_decode src/Quuppa_decode.cpp)
+
+rosbuild_add_executable(Quuppa_AZ src/Quuppa_AZ.cpp)
+#rosbuild_link_boost(Quuppa_AZ algo
 
 rosbuild_add_executable(Json src/json_decode.cpp)
 target_link_libraries(Json ${CURL_LIBRARIES}) 
