@@ -16,6 +16,7 @@
 #include <Lindsey/AzTag.h>
 #include <boost/algorithm/string.hpp>
 #include <vector>
+#include <ros/time.h>
 
 #define BUFLEN 512
 #define PORT 22102
@@ -44,11 +45,11 @@ typedef std::vector< std::string > split_vector_type;
 split_vector_type fields;
 
     struct sockaddr_in my_addr, cli_addr;
-    int sockfd, i; 
+    int sockfd;
+
     socklen_t slen=sizeof(cli_addr);
     char buf[BUFLEN];
-char * pEnd;
-	std::string str;
+	
 
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))==-1)
       err("socket");
@@ -70,22 +71,77 @@ char * pEnd;
         if (recvfrom(sockfd, buf, BUFLEN, 0, (struct sockaddr*)&cli_addr, &slen)==-1)
             err("recvfrom()");
         printf("Received packet from %s:%d\nData: %s\n\n",inet_ntoa(cli_addr.sin_addr), ntohs(cli_addr.sin_port), buf);
-    		//char buf_name[BUFLEN];
-		int size = BUFLEN;
-		str.assign(buf);
-		std::cout <<str<<std::endl;
-		//split incomming string
-		boost::split( fields, str, boost::is_any_of( "," ) );
-		printf("split");
-		Tags.Id[0]=fields[0];
-		const char *cstr = fields[1].c_str();
-		Tags.azm[0]=strtod(cstr,NULL);
-		cstr = fields[1].c_str();
-		Tags.zen[0]=strtod(cstr,NULL);
-		tag_msg.publish(Tags);
-loop_rate.sleep();
-}
 
-    close(sockfd);
+		std::string name;
+		std::string azm;
+		std::string zen;
+		int not_named_yet = 1;
+		int not_azm_yet =0;
+		int not_zen_yet =0;
+		int tags_read = 0;
+
+		for (int n=0; n<BUFLEN+1; n++){
+			
+			
+				 if (  buf[n]==NULL ){
+					
+					
+					Tags.Id.push_back(name);
+					
+					Tags.azm.push_back(strtod(azm.c_str(),NULL));
+					
+					Tags.zen.push_back(strtod(zen.c_str(),NULL));
+					break;
+					std::cout <<"Break"<<std::endl;
+				}
+				
+		
+				if ( ( buf[n]==',')  && ( (not_named_yet==1) && (not_azm_yet==0) && (not_zen_yet==0) ) )
+					{// std::cout <<"Found 1,"<<std::endl;
+					not_named_yet = 0;
+					not_azm_yet =1;
+					not_zen_yet =0;
+					continue;}
+				else if ( ( buf[n]==',')  && ( (not_named_yet==0) && (not_azm_yet==1) && (not_zen_yet==0) ) )
+					{ //std::cout <<"Found 2,"<<std::endl;
+					not_named_yet = 0;
+					not_azm_yet =0;
+					not_zen_yet =1;
+					continue;}
+				else if ( ( buf[n]==',')  && ( (not_named_yet==0) && (not_azm_yet==0) && (not_zen_yet==1) ) )
+					{ //std::cout <<"Found 3,"<<std::endl;
+					not_named_yet = 1;
+					not_azm_yet =0;
+					not_zen_yet =0;
+										
+					Tags.Id.push_back(name);
+					Tags.azm.push_back(strtod(azm.c_str(),NULL));
+					Tags.zen.push_back(strtod(zen.c_str(),NULL));
+					
+					tags_read++;
+					name.clear();
+					azm.clear();
+					zen.clear();
+					continue;
+					}
+
+					if (not_named_yet)	{name.push_back(buf[n]);}
+					else if (not_azm_yet)	{azm.push_back(buf[n]);}
+					else if (not_zen_yet)	{zen.push_back(buf[n]);}
+
+				
+	
+		}
+		std::cout <<"Done loopin"<<std::endl;	
+		memset(&buf[0], 0, sizeof(buf));
+		Tags.header.stamp = ros::Time::now();
+		tag_msg.publish(Tags);
+		Tags.Id.clear();
+		Tags.azm.clear();
+		Tags.zen.clear();
+		loop_rate.sleep();
+}
+close(sockfd);
+
     return 0;
 }
