@@ -41,10 +41,8 @@ rosbuild_add_executable(Roomba_test src/Roomba_test.cpp)
 rosbuild_add_executable(Rotate_tag src/rotate_tag.cpp)
 rosbuild_add_executable(Point2Point src/Point2Point.cpp)
 rosbuild_add_executable(Listen src/csv_listener.cpp)
-#rosbuild_add_executable(Rotate_uav_trackee src/Rotate_uav_trackee.cpp)
-#rosbuild_add_executable(TF_odom src/tf_from_odom.cpp)
-#rosbuild_add_executable(Orient src/orient.cpp)
 rosbuild_add_executable(Quuppa_decode src/Quuppa_decode.cpp)
+rosbuild_add_executable(AZ_SIM src/AZ_sim.cpp)
 
 rosbuild_add_executable(Quuppa_AZ src/Quuppa_AZ.cpp)
 #rosbuild_link_boost(Quuppa_AZ algo

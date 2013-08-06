@@ -52,6 +52,7 @@ float kd= .15;
 float max_speed_twist =0.4;
 float tag_x_old =0;
 float tag_y_old =0;
+float tag_z_old =0;
 //double joy_x_old,joy_y_old,joy_z_old;
 geometry_msgs::Twist twist_msg;
 std_msgs::Empty emp_msg;
@@ -171,7 +172,7 @@ int main(int argc, char** argv)
 		Time_old= ros::Time::now();
 		merge_new_mgs();
 		//commands to change state of drone
-		if (joy_a){
+		while (joy_a){
 			while (drone_state ==2){
 				ROS_INFO("Launching drone");
 				pub_empty_takeoff.publish(emp_msg); //launches the drone
@@ -179,7 +180,7 @@ int main(int argc, char** argv)
 				loop_rate.sleep();
 			}//drone take off
 		}	
-		if (joy_b){
+		while (joy_b){
 			while (drone_state ==3 || drone_state ==4){
 				ROS_INFO("landing drone");
 				pub_empty_land.publish(emp_msg); //launches the drone
@@ -187,7 +188,7 @@ int main(int argc, char** argv)
 				loop_rate.sleep();
 			}//drone land
 		}
-		if (joy_xbox){
+		while (joy_xbox){
 			double time_start=(double)ros::Time::now().toSec();
 			while (drone_state ==0 ){
 				ROS_INFO("resetting drone");
@@ -202,19 +203,24 @@ int main(int argc, char** argv)
 		}
 		
 		while (joy_yb){
-			//position hold and track point
+			//position hold
 			merge_new_mgs();
 
 			ROS_INFO("Error x: %f y: %f z: %f",tag[0],tag[1],tag[2]);	
 
 			p_term.x=kp*tag[1];
 			p_term.y=kp*-tag[0];
+			p_term.z=kp*tag[2];			
 			d_term.x=kd*((tag[1]-tag_x_old)*ROSHZ);
 			d_term.y=-kd*((tag[0]-tag_y_old)*ROSHZ);
-			ROS_INFO("DX dx: %f dy: %f",d_term.x,d_term.y);
+			d_term.z=kd*((tag[2]-tag_z_old)*ROSHZ);
+			
+			ROS_INFO("Cont px: %f py: %f",p_term.x,p_term.y);
+			ROS_INFO("Cont dx: %f dy: %f",d_term.x,d_term.y);
+
 			twist_msg.linear.x=p_term.x+d_term.x;
 			twist_msg.linear.y=p_term.y+d_term.y;
-			twist_msg.linear.z= 0.0; 
+			twist_msg.linear.z= p_term.z; 
 			//twist_msg.angular.z=(kp*-next_tag[0]);
 			twist_msg.angular.z=0.0;
 
@@ -225,11 +231,7 @@ int main(int argc, char** argv)
 			if(twist_msg.angular.z>2*max_speed_twist) {twist_msg.angular.z=2*max_speed_twist;}
 			if(twist_msg.angular.z<-2*max_speed_twist) {twist_msg.angular.z=-2*max_speed_twist;}
 
-			ROS_INFO("Cont px: %f py: %f",p_term.x,p_term.y);
-			ROS_INFO("Cont dx: %f dy: %f",d_term.x,d_term.y);
-			
 			ROS_INFO("Auto Drone commands x: %f y: %f z: %f",twist_msg.linear.x,twist_msg.linear.y,twist_msg.angular.z);
-
 
 			v3_msg.x=twist_msg.linear.x;
 			v3_msg.y=twist_msg.linear.y;
@@ -239,6 +241,7 @@ int main(int argc, char** argv)
 			pub_twist.publish(twist_msg); 
 			tag_x_old=tag[1];
 			tag_y_old=tag[0]; 
+			tag_z_old=tag[2]; 
 			ros::spinOnce();
 			loop_rate.sleep();
 
