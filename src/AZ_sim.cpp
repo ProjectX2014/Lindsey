@@ -5,7 +5,7 @@
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/Vector3.h>
 #include <ros/time.h>
-#include <Lindsey/AzTag.h>
+#include <Lindsey/AZTag.h>
 
 #define LOCATORTF "vicon/QuuppaLocator/Locator"
 #define TRACKEETF "vicon/QuuppaWand/Wand"
@@ -13,11 +13,11 @@
 
 
 geometry_msgs::Vector3 time_step;
-Lindsey::AzTag Tags;
+Lindsey::AZTag Tags;
 const float rad2deg=57.29577;
 int message=0;
 
-void tag_callback(const Lindsey::AzTag& msg)
+void tag_callback(const Lindsey::AZTag& msg)
 {
 	Tags=msg;
 	message=1;
@@ -30,12 +30,12 @@ ros::NodeHandle node;
 ros::Rate loop_rate(250);
 
 ros::Subscriber tag_sub = node.subscribe("Quuppa_AZ", 1, tag_callback);
-ros::Publisher v3_msg = node.advertise<geometry_msgs::Vector3>("AZM_error", 1); 
+ros::Publisher v3_msg = node.advertise<geometry_msgs::Vector3>("AZM_error", 1);
 
 geometry_msgs::Vector3 tag;
 tf::TransformBroadcaster br;
 tf::TransformListener listener;
-geometry_msgs::Vector3 error; 
+geometry_msgs::Vector3 error;
 
 tf::StampedTransform err_transform;
 
