@@ -13,6 +13,8 @@ It is intended as a simple example for those starting with the AR Drone platform
 #include <geometry_msgs/Vector3.h>
 #include <ardrone_autonomy/Navdata.h>
 #include <ros/time.h>
+#define ROSHZ 200
+
 ros::Time Time_old;
 int measure_time =1;
 ros::Duration step;
@@ -45,9 +47,12 @@ int new_msg=0;
 int drone_state =0; 
 // state: {0 is failure, 2 is landed, 3 is flying, 4 is hovering, 6 taking off, 8 landing}
 float forget =0.99;
-float kp=1;
-float kd= .5;
-float max_speed_twist =0.2;
+float kp=.2;
+float kd= .15;
+float max_speed_twist =0.4;
+float tag_x_old =0;
+float tag_y_old =0;
+float tag_z_old =0;
 //double joy_x_old,joy_y_old,joy_z_old;
 geometry_msgs::Twist twist_msg;
 std_msgs::Empty emp_msg;
@@ -139,7 +144,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv,"ARDrone_fly_from_joy");
     	ros::NodeHandle node;
-   	ros::Rate loop_rate(100);
+   	ros::Rate loop_rate(ROSHZ);
 	ros::Publisher pub_twist;
 	ros::Publisher pub_empty_reset;
 	ros::Publisher pub_empty_land;
@@ -167,7 +172,7 @@ int main(int argc, char** argv)
 		Time_old= ros::Time::now();
 		merge_new_mgs();
 		//commands to change state of drone
-		if (joy_a){
+		while (joy_a){
 			while (drone_state ==2){
 				ROS_INFO("Launching drone");
 				pub_empty_takeoff.publish(emp_msg); //launches the drone
@@ -175,7 +180,7 @@ int main(int argc, char** argv)
 				loop_rate.sleep();
 			}//drone take off
 		}	
-		if (joy_b){
+		while (joy_b){
 			while (drone_state ==3 || drone_state ==4){
 				ROS_INFO("landing drone");
 				pub_empty_land.publish(emp_msg); //launches the drone
@@ -183,7 +188,7 @@ int main(int argc, char** argv)
 				loop_rate.sleep();
 			}//drone land
 		}
-		if (joy_xbox){
+		while (joy_xbox){
 			double time_start=(double)ros::Time::now().toSec();
 			while (drone_state ==0 ){
 				ROS_INFO("resetting drone");
@@ -197,22 +202,28 @@ int main(int argc, char** argv)
 			}//drone take off	
 		}
 		
-		if (joy_yb){
-			//position hold and track point
+		while (joy_yb){
+			//position hold
 			merge_new_mgs();
 
 			ROS_INFO("Error x: %f y: %f z: %f",tag[0],tag[1],tag[2]);	
 
 			p_term.x=kp*tag[1];
 			p_term.y=kp*-tag[0];
-			d_term.x=kd*drone_vx;
-			d_term.y=kd*drone_vy;
-
-			twist_msg.linear.x=p_term.x-d_term.x;
-			twist_msg.linear.y=p_term.y-d_term.y;
-			twist_msg.linear.z= 0.0; 
-			twist_msg.angular.z=(kp*-next_tag[0]);
+			p_term.z=kp*tag[2];			
+			d_term.x=kd*((tag[1]-tag_x_old)*ROSHZ);
+			d_term.y=-kd*((tag[0]-tag_y_old)*ROSHZ);
+			d_term.z=kd*((tag[2]-tag_z_old)*ROSHZ);
 			
+			ROS_INFO("Cont px: %f py: %f",p_term.x,p_term.y);
+			ROS_INFO("Cont dx: %f dy: %f",d_term.x,d_term.y);
+
+			twist_msg.linear.x=p_term.x+d_term.x;
+			twist_msg.linear.y=p_term.y+d_term.y;
+			twist_msg.linear.z= p_term.z; 
+			//twist_msg.angular.z=(kp*-next_tag[0]);
+			twist_msg.angular.z=0.0;
+
 			if(twist_msg.linear.x>max_speed_twist) {twist_msg.linear.x=max_speed_twist;}
 			if(twist_msg.linear.x<-max_speed_twist) {twist_msg.linear.x=-max_speed_twist;}
 			if(twist_msg.linear.y>max_speed_twist) {twist_msg.linear.y=max_speed_twist;}
@@ -220,24 +231,23 @@ int main(int argc, char** argv)
 			if(twist_msg.angular.z>2*max_speed_twist) {twist_msg.angular.z=2*max_speed_twist;}
 			if(twist_msg.angular.z<-2*max_speed_twist) {twist_msg.angular.z=-2*max_speed_twist;}
 
-			ROS_INFO("Cont px: %f py: %f",p_term.x,p_term.y);
-			ROS_INFO("Cont dx: %f dy: %f",d_term.x,d_term.y);
-			
 			ROS_INFO("Auto Drone commands x: %f y: %f z: %f",twist_msg.linear.x,twist_msg.linear.y,twist_msg.angular.z);
-
 
 			v3_msg.x=twist_msg.linear.x;
 			v3_msg.y=twist_msg.linear.y;
 			v3_msg.z=twist_msg.linear.z;
 			pub_v3.publish(v3_msg);
 		
-			pub_twist.publish(twist_msg); //enable later
+			pub_twist.publish(twist_msg); 
+			tag_x_old=tag[1];
+			tag_y_old=tag[0]; 
+			tag_z_old=tag[2]; 
 			ros::spinOnce();
 			loop_rate.sleep();
 
 		}
 
-		if (joy_xb){
+		while (joy_xb){
 			//Track point via yaw
 			merge_new_mgs();
 
@@ -260,7 +270,7 @@ int main(int argc, char** argv)
 
 		}
 
-else{ //control via joystick
+//else{ //control via joystick
 
 		if (fabs(joy_x)<0.1) {joy_x =0;}
 		//else {joy_x=joy_x*forget+joy_x_old*(1-forget);} //smoothing via forget
@@ -294,7 +304,7 @@ else{ //control via joystick
 
 		ros::spinOnce();
 		loop_rate.sleep();
-	}
+	//}
 if(measure_time)
 {
 				step=ros::Time::now()-Time_old;

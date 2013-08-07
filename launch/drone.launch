@@ -9,7 +9,7 @@
 
 		<param name="do_imu_caliberation" value="true" />
 		<param name="tf_prefix" value="ardrone" />
-		<param name="looprate" value="50" />
+		<param name="looprate" value="200" />
 		<param name="outdoor" value="1" />
 		<param name="flight_without_shell" value="0" />
 		<param name="max_bitrate" value="4000" />
@@ -19,8 +19,8 @@
 		<param name="euler_angle_max" value="0.136" /> <!--limit angle to 8 degrees -->
 		<param name="control_vz_max" value="2000" /> <!-- was 700 -->
 		<param name="control_yaw" value="1.75" />
-		<param name="navdata_demo" value="FALSE" /> <!-- May need to be false for tag detection -->
-		<param name="enable_navdata_time" value="false" />
+		<param name="navdata_demo" value="0" /> <!-- May need to be false for tag detection -->
+		<param name="enable_navdata_time" value="0" />
 		<param name="enable_navdata_raw_measures" value="FALSE" />
 		<param name="enable_navdata_phys_measures" value="FALSE" />
 		<param name="enable_navdata_gyros_offsets" value="false" />
