@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <stdlib.h> 
 #include <string.h>
-#include <Lindsey/AzTag.h>
+#include <Lindsey/AZTag.h>
 #include <boost/algorithm/string.hpp>
 #include <vector>
 #include <ros/time.h>
@@ -32,9 +32,9 @@ int main(int argc, char** argv)
 	ros::init(argc, argv,"QUUPPA_AZ_NODE");
 	ros::NodeHandle node;
 	ros::Rate loop_rate(200);
-	ros::Publisher tag_msg = node.advertise<Lindsey::AzTag>("Quuppa_AZ", 1); 
+	ros::Publisher tag_msg = node.advertise<Lindsey::AZTag>("Quuppa_AZ", 1); 
 
-	Lindsey::AzTag Tags;
+	Lindsey::AZTag Tags;
 	int number_tags =1;
 	Tags.NumTags = number_tags;
 	Tags.Id[number_tags];
