@@ -35,11 +35,16 @@ int main(int argc, char** argv)
 	ros::Publisher tag_msg = node.advertise<Lindsey::AZTag>("Quuppa_AZ", 1); 
 
 	Lindsey::AZTag Tags;
+	Lindsey::AZTag fTags;
 	int number_tags =1;
 	Tags.NumTags = number_tags;
 	Tags.Id[number_tags];
 	Tags.azm[number_tags];
 	Tags.zen[number_tags];
+
+	fTags.Id[number_tags];
+	fTags.azm[number_tags];
+	fTags.zen[number_tags];
 
 typedef std::vector< std::string > split_vector_type;
 split_vector_type fields;
@@ -87,9 +92,7 @@ split_vector_type fields;
 					
 					
 					Tags.Id.push_back(name);
-					
 					Tags.azm.push_back(strtod(azm.c_str(),NULL));
-					
 					Tags.zen.push_back(strtod(zen.c_str(),NULL));
 					break;
 					std::cout <<"Break"<<std::endl;
@@ -123,7 +126,7 @@ split_vector_type fields;
 					azm.clear();
 					zen.clear();
 					continue;
-					}
+			0)		}
 
 					if (not_named_yet)	{name.push_back(buf[n]);}
 					else if (not_azm_yet)	{azm.push_back(buf[n]);}
@@ -135,6 +138,8 @@ split_vector_type fields;
 		std::cout <<"Done loopin"<<std::endl;	
 		memset(&buf[0], 0, sizeof(buf));
 		Tags.header.stamp = ros::Time::now();
+		// Here is where the code should be filtered. Take the last two data points and publish a filtered variable.
+		
 		tag_msg.publish(Tags);
 		Tags.Id.clear();
 		Tags.azm.clear();

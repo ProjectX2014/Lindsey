@@ -17,10 +17,10 @@
   <depend package="sensor_msgs"/>
   <depend package="tf"/>
   <depend package="geometry_msgs"/>
-  <depend package="ardrone_autonomy"/>
-  <depend package="irobot_create_2_1"/>
+<!--  <depend package="ardrone_autonomy"/> -->
+<!--  <depend package="irobot_create_2_1"/>-->
   <depend package="rospy"/>
-<depend package='opencv2'/>
+<!-- <depend package='opencv2'/> -->
 </package>
 
 

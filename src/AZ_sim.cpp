@@ -27,15 +27,18 @@ int main(int argc, char** argv){
 
 ros::init(argc, argv, "AZ_Sim");
 ros::NodeHandle node;
-ros::Rate loop_rate(250);
+ros::Rate loop_rate(50);
 
 ros::Subscriber tag_sub = node.subscribe("Quuppa_AZ", 1, tag_callback);
-ros::Publisher v3_msg = node.advertise<geometry_msgs::Vector3>("AZM_error", 1);
+ros::Publisher v3_msg = node.advertise<geometry_msgs::Vector3>("AZM_error", 1); 
+ros::Publisher v3_msg2 = node.advertise<geometry_msgs::Vector3>("AZM_real", 1);
 
 geometry_msgs::Vector3 tag;
 tf::TransformBroadcaster br;
 tf::TransformListener listener;
-geometry_msgs::Vector3 error;
+geometry_msgs::Vector3 error; 
+geometry_msgs::Vector3 real; 
+
 
 tf::StampedTransform err_transform;
 
@@ -73,14 +76,18 @@ while(ros::ok() ){
 if (message)
 {
 		mes_azm=Tags.azm[0];
-		if (mes_azm>0) {mes_azm-=180;}
-		else {mes_azm+=180;}
+	//	if (mes_azm>0) {mes_azm-=180;}
+	//	else {mes_azm+=180;}
 	//if (mes_azm<0){mes_azm+=360;};
 		mes_zen=Tags.zen[0];
-		error.x=abs(mes_azm-azm);
-		error.y=abs(mes_zen-zen);
+		
+		error.x=(mes_azm-azm);
+		error.y=(mes_zen-zen);
 		v3_msg.publish(error);
-
+		real.x=azm;
+		real.y=zen;
+		v3_msg2.publish(real);
+		
 		ROS_INFO("Quuppa AZM %f ZEN %f",mes_azm,mes_zen);
 		ROS_INFO("ERROR AZM %f ZEN %f",error.x,error.y);
 		ROS_INFO("\n");
