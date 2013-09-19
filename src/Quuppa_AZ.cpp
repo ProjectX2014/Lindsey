@@ -126,7 +126,7 @@ split_vector_type fields;
 					azm.clear();
 					zen.clear();
 					continue;
-			0)		}
+					}
 
 					if (not_named_yet)	{name.push_back(buf[n]);}
 					else if (not_azm_yet)	{azm.push_back(buf[n]);}
